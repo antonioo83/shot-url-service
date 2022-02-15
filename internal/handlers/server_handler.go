@@ -11,9 +11,9 @@ func UrlHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		w.Header().Set("Location", "originalUrl")
-		w.WriteHeader(306)
-		w.Write(GetJsonResponse("id", id))
+		w.Header().Set("Location", "https://www.rbc.ru")
+		w.WriteHeader(307)
+		w.Write([]byte(id))
 	case http.MethodPost:
 		originalUrl, err := GetUrlParameter(r)
 		if err != nil {
@@ -21,17 +21,17 @@ func UrlHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		shotUrl, err := GetShortUrl(originalUrl)
+		shotUrl, err := GetShortUrl(originalUrl, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		w.Write(GetJsonResponse("url", shotUrl))
+		w.Write([]byte(shotUrl))
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 		w.WriteHeader(400)
-		w.Write(GetJsonResponse("error", "Wrong request!"))
+		w.Write([]byte("error request"))
 	}
 }

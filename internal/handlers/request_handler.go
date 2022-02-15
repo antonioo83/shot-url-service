@@ -1,14 +1,10 @@
 package handlers
 
 import (
-	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 )
-
-type myData struct {
-	Url string
-}
 
 func GetQuery(name string, r *http.Request) (string, error) {
 	parameter := ""
@@ -23,12 +19,7 @@ func GetQuery(name string, r *http.Request) (string, error) {
 }
 
 func GetUrlParameter(r *http.Request) (string, error) {
-	var data myData
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&data)
-	if err != nil {
-		return "", errors.New("I can't decode json request:" + err.Error())
-	}
+	b, err := io.ReadAll(r.Body)
 
-	return data.Url, nil
+	return string(b), err
 }

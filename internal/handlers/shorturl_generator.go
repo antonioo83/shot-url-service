@@ -5,17 +5,12 @@ import (
 	"fmt"
 	"github.com/itchyny/base58-go"
 	"math/big"
-	"net/url"
+	"net/http"
 	"os"
 )
 
-func GetShortUrl(originalUrl string) (string, error) {
-	link, err := url.Parse(originalUrl)
-	if err != nil {
-		return "", err
-	}
-
-	return string(link.Scheme) + "://" + string(link.Host) + "/" + generateShortLink(originalUrl, string("userId")), nil
+func GetShortUrl(originalUrl string, r *http.Request) (string, error) {
+	return "http://" + r.Host + "/" + generateShortLink(originalUrl, string("userId")), nil
 }
 
 func generateShortLink(initialLink string, userId string) string {
