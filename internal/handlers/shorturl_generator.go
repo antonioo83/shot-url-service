@@ -9,8 +9,9 @@ import (
 	"os"
 )
 
-func GetShortUrl(originalUrl string, r *http.Request) (string, error) {
-	return "http://" + r.Host + "/" + generateShortLink(originalUrl, string("userId")), nil
+func GetShortUrl(originalUrl string, r *http.Request) (string, string, error) {
+	urlId := generateShortLink(originalUrl, string("userId"))
+	return "http://" + r.Host + "/" + urlId, urlId, nil
 }
 
 func generateShortLink(initialLink string, userId string) string {

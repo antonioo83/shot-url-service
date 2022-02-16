@@ -1,19 +1,25 @@
 package handlers
 
-import "net/http"
+import (
+	"net/http"
+	"strings"
+)
+
+var database = make(map[string]string)
 
 func UrlHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		/*
-			id, err := GetQuery("id", r)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}*/
+		urlId := strings.Replace(r.RequestURI, "/", "", 1)
+		redirectUrl, ok := database[urlId]
+		if ok == false {
+			http.Error(w, string("Original Url not exist"), http.StatusBadRequest)
+			return
+		}
 
-		w.Header().Set("Location", "https://www.rbc.ru")
+		w.Header().Set("Location", redirectUrl)
 		w.WriteHeader(307)
+		//w.Write([]byte())
 	case http.MethodPost:
 		originalUrl, err := GetUrlParameter(r)
 		if err != nil {
@@ -21,12 +27,13 @@ func UrlHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		shotUrl, err := GetShortUrl(originalUrl, r)
+		shotUrl, urlId, err := GetShortUrl(originalUrl, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
+		database[urlId] = originalUrl
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte(shotUrl))
 	default:
