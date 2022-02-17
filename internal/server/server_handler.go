@@ -4,25 +4,29 @@ import (
 	"github.com/antonioo83/shot-url-service/internal/handlers"
 	"github.com/antonioo83/shot-url-service/internal/models"
 	"github.com/antonioo83/shot-url-service/internal/repositories/localcache"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"net/http"
-	"strings"
+	"time"
 )
 
-func UrlHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		code := strings.Replace(r.RequestURI, "/", "", 1)
-		model, err := localcache.FindByCode(code)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
+func GetRouters() *chi.Mux {
+	r := chi.NewRouter()
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Timeout(60 * time.Second))
 
-		w.Header().Set("Location", model.OriginalUrl)
-		w.WriteHeader(307)
-		//w.Write([]byte(model.OriginalUrl))
-	case http.MethodPost:
-		originalUrl, err := handlers.GetUrlParameter(r)
+	r = getOriginalUrlRoute(r)
+	r = getCreateShortUrlRoute(r)
+
+	return r
+}
+
+func getCreateShortUrlRoute(r *chi.Mux) *chi.Mux {
+	r.Post("/", func(w http.ResponseWriter, r *http.Request) {
+		originalUrl, err := handlers.GetBody(r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -42,9 +46,28 @@ func UrlHandler(w http.ResponseWriter, r *http.Request) {
 
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte(shotUrl))
-	default:
-		w.WriteHeader(http.StatusBadRequest)
-		w.WriteHeader(400)
-		w.Write([]byte("error request"))
-	}
+	})
+
+	return r
+}
+
+func getOriginalUrlRoute(r *chi.Mux) *chi.Mux {
+	r.Get("/{httpStatus}", func(w http.ResponseWriter, r *http.Request) {
+		code := chi.URLParam(r, "httpStatus")
+		if code == "" {
+			http.Error(w, "httpStatus param is missed", http.StatusBadRequest)
+			return
+		}
+		model, err := localcache.FindByCode(code)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		w.Header().Set("Location", model.OriginalUrl)
+		w.WriteHeader(307)
+		w.Write([]byte(model.OriginalUrl))
+	})
+
+	return r
 }

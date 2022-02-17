@@ -18,7 +18,7 @@ func GetQuery(name string, r *http.Request) (string, error) {
 	return parameter, nil
 }
 
-func GetUrlParameter(r *http.Request) (string, error) {
+func GetBody(r *http.Request) (string, error) {
 	b, err := io.ReadAll(r.Body)
 
 	return string(b), err

@@ -7,8 +7,5 @@ import (
 )
 
 func main() {
-	// маршрутизация запросов обработчику
-	http.HandleFunc("/", server.UrlHandler)
-	// запуск сервера с адресом localhost, порт 8080
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8080", server.GetRouters()))
 }
