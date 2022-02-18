@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/antonioo83/shot-url-service/internal/server"
 	"log"
-	http "net/http"
+	"net/http"
 )
 
 func main() {
