@@ -10,7 +10,7 @@ import (
 )
 
 func GetShortUrl(originalUrl string, r *http.Request) (string, string, error) {
-	urlId := generateShortLink(originalUrl, string("userId"))
+	urlId := generateShortLink(originalUrl, "userId")
 	return "http://" + r.Host + "/" + urlId, urlId, nil
 }
 
