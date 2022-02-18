@@ -6,6 +6,7 @@ import (
 	"github.com/antonioo83/shot-url-service/internal/repositories/localcache"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"log"
 	"net/http"
 	"time"
 )
@@ -45,7 +46,7 @@ func getCreateShortUrlRoute(r *chi.Mux) *chi.Mux {
 		localcache.SaveUrl(shortUrl)
 
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte(shotUrl))
+		logErr(w.Write([]byte(shotUrl)))
 	})
 
 	return r
@@ -66,8 +67,16 @@ func getOriginalUrlRoute(r *chi.Mux) *chi.Mux {
 
 		w.Header().Set("Location", model.OriginalUrl)
 		w.WriteHeader(307)
-		w.Write([]byte(model.OriginalUrl))
+		logErr(w.Write([]byte(model.OriginalUrl)))
 	})
 
 	return r
+}
+
+func logErr(n int, err error) int {
+	if err != nil {
+		log.Printf("Write failed: %v", err)
+	}
+
+	return n
 }

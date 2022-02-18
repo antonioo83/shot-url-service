@@ -11,7 +11,7 @@ import (
 	"testing"
 )
 
-func TestGetRouter(t *testing.T) {
+func TestGetRouters(t *testing.T) {
 	type want struct {
 		httpStatus int
 	}
@@ -51,7 +51,6 @@ func TestGetRouter(t *testing.T) {
 }
 
 func sendRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (*http.Response, string) {
-
 	req, err := http.NewRequest(method, ts.URL+path, body)
 	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
