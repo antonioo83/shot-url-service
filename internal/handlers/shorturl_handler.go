@@ -9,8 +9,8 @@ import (
 	"net/http"
 )
 
-func GetShortURL(originalUrl string, r *http.Request) (string, string, error) {
-	urlID, err := generateShortLink(originalUrl, "userId")
+func GetShortURL(originalURL string, r *http.Request) (string, string, error) {
+	urlID, err := generateShortLink(originalURL, "userId")
 	return "http://" + r.Host + "/" + urlID, urlID, err
 }
 

@@ -19,13 +19,13 @@ func GetRouters() *chi.Mux {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))
 
-	r = getOriginalUrlRoute(r)
-	r = getCreateShortUrlRoute(r)
+	r = getOriginalURLRoute(r)
+	r = getCreateShortURLRoute(r)
 
 	return r
 }
 
-func getCreateShortUrlRoute(r *chi.Mux) *chi.Mux {
+func getCreateShortURLRoute(r *chi.Mux) *chi.Mux {
 	r.Post("/", func(w http.ResponseWriter, r *http.Request) {
 		originalURL, err := handlers.GetBody(r)
 		if err != nil {
@@ -52,7 +52,7 @@ func getCreateShortUrlRoute(r *chi.Mux) *chi.Mux {
 	return r
 }
 
-func getOriginalUrlRoute(r *chi.Mux) *chi.Mux {
+func getOriginalURLRoute(r *chi.Mux) *chi.Mux {
 	r.Get("/{httpStatus}", func(w http.ResponseWriter, r *http.Request) {
 		code := chi.URLParam(r, "httpStatus")
 		if code == "" {
