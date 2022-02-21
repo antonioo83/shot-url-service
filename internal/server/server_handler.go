@@ -35,7 +35,7 @@ func getCreateShortUrlRoute(r *chi.Mux) *chi.Mux {
 
 		shotUrl, code, err := handlers.GetShortUrl(originalUrl, r)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -66,7 +66,7 @@ func getOriginalUrlRoute(r *chi.Mux) *chi.Mux {
 		}
 
 		w.Header().Set("Location", model.OriginalUrl)
-		w.WriteHeader(307)
+		w.WriteHeader(http.StatusTemporaryRedirect)
 		logErr(w.Write([]byte(model.OriginalUrl)))
 	})
 
