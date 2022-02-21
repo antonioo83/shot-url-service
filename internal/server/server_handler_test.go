@@ -18,14 +18,14 @@ func TestGetRouters(t *testing.T) {
 	tests := []struct {
 		name        string
 		code        string
-		originalUrl string
+		originalURL string
 		wantPost    want
 		wantGet     want
 	}{
 		{
 			name:        "positive test #1",
 			code:        "H1P4S7fw",
-			originalUrl: "https://stackoverflow.com/questions/15240884/how-can-i-handle-http-requests-of-different-methods-to-in-go",
+			originalURL: "https://stackoverflow.com/questions/15240884/how-can-i-handle-http-requests-of-different-methods-to-in-go",
 			wantPost: want{
 				httpStatus: 201,
 			},
@@ -40,14 +40,14 @@ func TestGetRouters(t *testing.T) {
 	defer ts.Close()
 
 	for _, tt := range tests {
-		resp, body := sendRequest(t, ts, "POST", "/", strings.NewReader(tt.originalUrl))
+		resp, body := sendRequest(t, ts, "POST", "/", strings.NewReader(tt.originalURL))
 		assert.Equal(t, tt.wantPost.httpStatus, resp.StatusCode)
 		assert.Equal(t, ts.URL+"/"+tt.code, body)
 		resp.Body.Close()
 
 		resp, body = sendRequest(t, ts, "GET", "/"+tt.code, nil)
 		assert.Equal(t, tt.wantGet.httpStatus, resp.StatusCode)
-		assert.Equal(t, tt.originalUrl, body)
+		assert.Equal(t, tt.originalURL, body)
 		resp.Body.Close()
 	}
 }
