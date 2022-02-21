@@ -1,8 +1,8 @@
 package models
 
-type ShortUrl struct {
+type ShortURL struct {
 	ID          string
 	Code        string
-	OriginalUrl string
-	ShortUrl    string
+	OriginalURL string
+	ShortURL    string
 }

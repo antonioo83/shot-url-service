@@ -43,10 +43,12 @@ func TestGetRouters(t *testing.T) {
 		resp, body := sendRequest(t, ts, "POST", "/", strings.NewReader(tt.originalUrl))
 		assert.Equal(t, tt.wantPost.httpStatus, resp.StatusCode)
 		assert.Equal(t, ts.URL+"/"+tt.code, body)
+		resp.Body.Close()
 
 		resp, body = sendRequest(t, ts, "GET", "/"+tt.code, nil)
 		assert.Equal(t, tt.wantGet.httpStatus, resp.StatusCode)
 		assert.Equal(t, tt.originalUrl, body)
+		resp.Body.Close()
 	}
 }
 

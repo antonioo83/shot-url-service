@@ -27,26 +27,26 @@ func GetRouters() *chi.Mux {
 
 func getCreateShortUrlRoute(r *chi.Mux) *chi.Mux {
 	r.Post("/", func(w http.ResponseWriter, r *http.Request) {
-		originalUrl, err := handlers.GetBody(r)
+		originalURL, err := handlers.GetBody(r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		shotUrl, code, err := handlers.GetShortUrl(originalUrl, r)
+		shotURL, code, err := handlers.GetShortURL(originalURL, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		var shortUrl models.ShortUrl
-		shortUrl.Code = code
-		shortUrl.OriginalUrl = originalUrl
-		shortUrl.ShortUrl = shotUrl
-		localcache.SaveUrl(shortUrl)
+		var shortURL models.ShortURL
+		shortURL.Code = code
+		shortURL.OriginalURL = originalURL
+		shortURL.ShortURL = shotURL
+		localcache.SaveURL(shortURL)
 
 		w.WriteHeader(http.StatusCreated)
-		logErr(w.Write([]byte(shotUrl)))
+		logErr(w.Write([]byte(shotURL)))
 	})
 
 	return r
@@ -65,9 +65,9 @@ func getOriginalUrlRoute(r *chi.Mux) *chi.Mux {
 			return
 		}
 
-		w.Header().Set("Location", model.OriginalUrl)
+		w.Header().Set("Location", model.OriginalURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
-		logErr(w.Write([]byte(model.OriginalUrl)))
+		logErr(w.Write([]byte(model.OriginalURL)))
 	})
 
 	return r

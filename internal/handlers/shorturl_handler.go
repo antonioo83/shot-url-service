@@ -9,13 +9,13 @@ import (
 	"net/http"
 )
 
-func GetShortUrl(originalUrl string, r *http.Request) (string, string, error) {
-	urlId, err := generateShortLink(originalUrl, "userId")
-	return "http://" + r.Host + "/" + urlId, urlId, err
+func GetShortURL(originalUrl string, r *http.Request) (string, string, error) {
+	urlID, err := generateShortLink(originalUrl, "userId")
+	return "http://" + r.Host + "/" + urlID, urlID, err
 }
 
-func generateShortLink(initialLink string, userId string) (string, error) {
-	urlHashBytes := sha256Of(initialLink + userId)
+func generateShortLink(initialLink string, userID string) (string, error) {
+	urlHashBytes := sha256Of(initialLink + userID)
 	generatedNumber := new(big.Int).SetBytes(urlHashBytes).Uint64()
 	finalString, err := base58Encoded([]byte(fmt.Sprintf("%d", generatedNumber)))
 	return finalString[:8], err
