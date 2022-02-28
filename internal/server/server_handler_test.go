@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/antonioo83/shot-url-service/internal/handlers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -40,27 +41,35 @@ func TestGetRouters(t *testing.T) {
 	defer ts.Close()
 
 	for _, tt := range tests {
-		resp, body := sendRequest(t, ts, "POST", "/", strings.NewReader(tt.originalURL))
+		jsonData := strings.NewReader(string(handlers.GetJsonRequest("url", tt.originalURL)))
+		jsonRequest := getJsonPostRequest(t, ts, "/api/shorten", jsonData)
+		resp, jsonResponse := sendRequest(t, jsonRequest)
+		resultParameter, err := handlers.GetResultParameter(jsonResponse)
+		require.NoError(t, err)
+		assert.Equal(t, tt.wantPost.httpStatus, resp.StatusCode)
+		assert.Equal(t, ts.URL+"/"+tt.code, resultParameter)
+		resp.Body.Close()
+
+		postRequest := getPostRequest(t, ts, "/", strings.NewReader(tt.originalURL))
+		resp, body := sendRequest(t, postRequest)
 		assert.Equal(t, tt.wantPost.httpStatus, resp.StatusCode)
 		assert.Equal(t, ts.URL+"/"+tt.code, body)
 		resp.Body.Close()
 
-		resp, body = sendRequest(t, ts, "GET", "/"+tt.code, nil)
+		getGetRequest := getGetRequest(t, ts, "/"+tt.code, nil)
+		resp, body = sendRequest(t, getGetRequest)
 		assert.Equal(t, tt.wantGet.httpStatus, resp.StatusCode)
 		assert.Equal(t, tt.originalURL, body)
 		resp.Body.Close()
 	}
 }
 
-func sendRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (*http.Response, string) {
-	req, err := http.NewRequest(method, ts.URL+path, body)
+func sendRequest(t *testing.T, req *http.Request) (*http.Response, string) {
 	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
 	}
-	require.NoError(t, err)
-
 	resp, err := client.Do(req)
 	require.NoError(t, err)
 
@@ -70,4 +79,27 @@ func sendRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 	defer resp.Body.Close()
 
 	return resp, string(respBody)
+}
+
+func getPostRequest(t *testing.T, ts *httptest.Server, path string, body io.Reader) *http.Request {
+	req, err := http.NewRequest("POST", ts.URL+path, body)
+	req.Header.Add("Content-Type", "text/plain")
+	require.NoError(t, err)
+
+	return req
+}
+
+func getGetRequest(t *testing.T, ts *httptest.Server, path string, body io.Reader) *http.Request {
+	req, err := http.NewRequest("GET", ts.URL+path, body)
+	require.NoError(t, err)
+
+	return req
+}
+
+func getJsonPostRequest(t *testing.T, ts *httptest.Server, path string, body io.Reader) *http.Request {
+	req, err := http.NewRequest("POST", ts.URL+path, body)
+	req.Header.Add("Content-Type", "application/json")
+	require.NoError(t, err)
+
+	return req
 }

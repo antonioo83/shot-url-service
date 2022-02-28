@@ -21,6 +21,34 @@ func GetRouters() *chi.Mux {
 
 	r = getOriginalURLRoute(r)
 	r = getCreateShortURLRoute(r)
+	r = getCreateJsonShortURLRoute(r)
+
+	return r
+}
+
+func getCreateJsonShortURLRoute(r *chi.Mux) *chi.Mux {
+	r.Post("/api/shorten", func(w http.ResponseWriter, r *http.Request) {
+		originalURL, err := handlers.GetUrlParameter(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		shotURL, code, err := handlers.GetShortURL(originalURL, r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		var shortURL models.ShortURL
+		shortURL.Code = code
+		shortURL.OriginalURL = originalURL
+		shortURL.ShortURL = shotURL
+		localcache.SaveURL(shortURL)
+
+		w.WriteHeader(http.StatusCreated)
+		logErr(w.Write(handlers.GetJsonResponse("result", shotURL)))
+	})
 
 	return r
 }
