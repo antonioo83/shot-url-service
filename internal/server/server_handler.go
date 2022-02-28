@@ -46,8 +46,8 @@ func getCreateJsonShortURLRoute(r *chi.Mux) *chi.Mux {
 		shortURL.ShortURL = shotURL
 		localcache.SaveURL(shortURL)
 
-		w.WriteHeader(http.StatusCreated)
 		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
 		logErr(w.Write(handlers.GetJsonResponse("result", shotURL)))
 	})
 
