@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/antonioo83/shot-url-service/config"
 	"github.com/antonioo83/shot-url-service/internal/handlers"
 	"github.com/antonioo83/shot-url-service/internal/models"
 	"github.com/antonioo83/shot-url-service/internal/repositories/localcache"
@@ -34,7 +35,7 @@ func getCreateJsonShortURLRoute(r *chi.Mux) *chi.Mux {
 			return
 		}
 
-		shotURL, code, err := handlers.GetShortURL(originalURL, r)
+		shotURL, code, err := handlers.GetShortURL(originalURL, config.GetConfig().BaseUrl)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -62,7 +63,7 @@ func getCreateShortURLRoute(r *chi.Mux) *chi.Mux {
 			return
 		}
 
-		shotURL, code, err := handlers.GetShortURL(originalURL, r)
+		shotURL, code, err := handlers.GetShortURL(originalURL, config.GetConfig().BaseUrl)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
