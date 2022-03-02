@@ -11,8 +11,8 @@ type Config struct {
 }
 
 func GetConfig() Config {
-	const ServerAddress string = "http://127.0.0.1:8080"
-	const BaseUrl string = "http://127.0.0.1:8080"
+	const ServerAddress string = ":8080"
+	const BaseUrl string = ""
 	var cfg Config
 	err := env.Parse(&cfg)
 	if err != nil {

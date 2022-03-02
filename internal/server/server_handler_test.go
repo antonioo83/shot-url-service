@@ -1,7 +1,6 @@
 package server
 
 import (
-	"github.com/antonioo83/shot-url-service/config"
 	"github.com/antonioo83/shot-url-service/internal/handlers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -39,7 +38,6 @@ func TestGetRouters(t *testing.T) {
 
 	r := GetRouters()
 	ts := httptest.NewServer(r)
-	ts.URL = config.GetConfig().BaseUrl
 	defer ts.Close()
 
 	for _, tt := range tests {

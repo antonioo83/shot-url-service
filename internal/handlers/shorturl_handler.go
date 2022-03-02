@@ -6,10 +6,16 @@ import (
 	"fmt"
 	"github.com/itchyny/base58-go"
 	"math/big"
+	"net/http"
 )
 
-func GetShortURL(originalURL string, newBaseUrl string) (string, string, error) {
+func GetShortURL(originalURL string, r *http.Request, newBaseUrl string) (string, string, error) {
 	urlID, err := generateShortLink(originalURL, "userId")
+
+	if newBaseUrl == "" {
+		return "http://" + r.Host + "/" + urlID, urlID, err
+	}
+
 	return newBaseUrl + "/" + urlID, urlID, err
 }
 

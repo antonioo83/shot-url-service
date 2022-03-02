@@ -35,7 +35,7 @@ func getCreateJsonShortURLRoute(r *chi.Mux) *chi.Mux {
 			return
 		}
 
-		shotURL, code, err := handlers.GetShortURL(originalURL, config.GetConfig().BaseUrl)
+		shotURL, code, err := handlers.GetShortURL(originalURL, r, config.GetConfig().BaseUrl)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -63,7 +63,7 @@ func getCreateShortURLRoute(r *chi.Mux) *chi.Mux {
 			return
 		}
 
-		shotURL, code, err := handlers.GetShortURL(originalURL, config.GetConfig().BaseUrl)
+		shotURL, code, err := handlers.GetShortURL(originalURL, r, config.GetConfig().BaseUrl)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
