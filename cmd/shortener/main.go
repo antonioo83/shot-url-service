@@ -8,5 +8,6 @@ import (
 )
 
 func main() {
+	server.LoadModelsFromDatabase()
 	log.Fatal(http.ListenAndServe(config.GetConfig().ServerAddress, server.GetRouters()))
 }

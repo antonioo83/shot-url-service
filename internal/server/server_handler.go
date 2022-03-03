@@ -4,6 +4,7 @@ import (
 	"github.com/antonioo83/shot-url-service/config"
 	"github.com/antonioo83/shot-url-service/internal/handlers"
 	"github.com/antonioo83/shot-url-service/internal/models"
+	"github.com/antonioo83/shot-url-service/internal/repositories/filestore"
 	"github.com/antonioo83/shot-url-service/internal/repositories/localcache"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -11,6 +12,18 @@ import (
 	"net/http"
 	"time"
 )
+
+func LoadModelsFromDatabase() bool {
+	var model models.ShortURL
+	_, err := filestore.LoadModels(localcache.Database, model, config.GetConfig())
+	if err != nil {
+		log.Fatal(err)
+
+		return false
+	}
+
+	return true
+}
 
 func GetRouters() *chi.Mux {
 	r := chi.NewRouter()
@@ -41,11 +54,14 @@ func getCreateJsonShortURLRoute(r *chi.Mux) *chi.Mux {
 			return
 		}
 
-		var shortURL models.ShortURL
-		shortURL.Code = code
-		shortURL.OriginalURL = originalURL
-		shortURL.ShortURL = shotURL
-		localcache.SaveURL(shortURL)
+		if localcache.IsHasInDatabase(code) == false {
+			var shortURL models.ShortURL
+			shortURL.Code = code
+			shortURL.OriginalURL = originalURL
+			shortURL.ShortURL = shotURL
+			localcache.SaveURL(shortURL)
+			filestore.SaveURL(shortURL, config.GetConfig())
+		}
 
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
@@ -69,11 +85,14 @@ func getCreateShortURLRoute(r *chi.Mux) *chi.Mux {
 			return
 		}
 
-		var shortURL models.ShortURL
-		shortURL.Code = code
-		shortURL.OriginalURL = originalURL
-		shortURL.ShortURL = shotURL
-		localcache.SaveURL(shortURL)
+		if localcache.IsHasInDatabase(code) == false {
+			var shortURL models.ShortURL
+			shortURL.Code = code
+			shortURL.OriginalURL = originalURL
+			shortURL.ShortURL = shotURL
+			localcache.SaveURL(shortURL)
+			filestore.SaveURL(shortURL, config.GetConfig())
+		}
 
 		w.WriteHeader(http.StatusCreated)
 		logErr(w.Write([]byte(shotURL)))
