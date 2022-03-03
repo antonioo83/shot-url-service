@@ -53,6 +53,11 @@ type consumer struct {
 }
 
 func LoadModels(database map[string]models.ShortURL, model models.ShortURL, config config.Config) (map[string]models.ShortURL, error) {
+	if config.IsUseFileStore == false {
+
+		return database, nil
+	}
+
 	consumer, err := getConsumer(config.FileStoragePath)
 	if err != nil {
 		return nil, err
