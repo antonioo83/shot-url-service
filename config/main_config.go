@@ -1,8 +1,8 @@
 package config
 
 import (
+	"flag"
 	"github.com/caarlos0/env/v6"
-	"github.com/spf13/pflag"
 	"log"
 )
 
@@ -30,15 +30,15 @@ func GetConfig() Config {
 		log.Println(err)
 	}
 
-	pflag.StringVar(&cfg.ServerAddress, "a", cfg.ServerAddress, "The address of the local server")
+	flag.StringVar(&cfg.ServerAddress, "a", cfg.ServerAddress, "The address of the local server")
 	//pflag.Lookup("a").NoOptDefVal = cfg.ServerAddress
 
-	pflag.StringVar(&cfg.BaseUrl, "b", cfg.BaseUrl, "Base address of the result short url")
+	flag.StringVar(&cfg.BaseUrl, "b", cfg.BaseUrl, "Base address of the result short url")
 	//pflag.Lookup("b").NoOptDefVal = cfg.BaseUrl
 
-	pflag.StringVar(&cfg.FileStoragePath, "f", cfg.FileStoragePath, "Full filepath to the file storage")
+	flag.StringVar(&cfg.FileStoragePath, "f", cfg.FileStoragePath, "Full filepath to the file storage")
 	//pflag.Lookup("f").NoOptDefVal = cfg.FileStoragePath
-	pflag.Parse()
+	flag.Parse()
 	if cfg.ServerAddress == "" {
 		cfg.ServerAddress = ServerAddress
 	}
