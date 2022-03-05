@@ -23,7 +23,7 @@ func getJSONResponse(key string, value string) ([]byte, error) {
 	resp[key] = value
 	jsonResp, err := json.Marshal(resp)
 	if err != nil {
-		return jsonResp, errors.New("Error happened in JSON marshal")
+		return jsonResp, errors.New("error happened in JSON marshal")
 	}
 
 	return jsonResp, nil

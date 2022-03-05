@@ -15,7 +15,7 @@ func GetBody(r *http.Request) (string, error) {
 }
 
 type shortURLRequest struct {
-	Url string
+	URL string
 }
 
 func GetURLParameter(r *http.Request) (string, error) {
@@ -26,5 +26,5 @@ func GetURLParameter(r *http.Request) (string, error) {
 		return "", errors.New("I can't decode json request:" + err.Error())
 	}
 
-	return request.Url, nil
+	return request.URL, nil
 }

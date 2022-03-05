@@ -48,7 +48,7 @@ func getCreateShortURLRoute(r *chi.Mux) *chi.Mux {
 			return
 		}
 
-		getSavedShortUrlResponse(w, r, originalURL, func(w http.ResponseWriter, shotURL string) {
+		getSavedShortURLResponse(w, r, originalURL, func(w http.ResponseWriter, shotURL string) {
 			handlers.GetCreateShortURLResponse(w, shotURL)
 		})
 	})
@@ -64,7 +64,7 @@ func getCreateJSONShortURLRoute(r *chi.Mux) *chi.Mux {
 			return
 		}
 
-		getSavedShortUrlResponse(w, r, originalURL, func(w http.ResponseWriter, shotURL string) {
+		getSavedShortURLResponse(w, r, originalURL, func(w http.ResponseWriter, shotURL string) {
 			handlers.GetCreateJSONShortURLResponse(w, shotURL)
 		})
 	})
@@ -72,7 +72,7 @@ func getCreateJSONShortURLRoute(r *chi.Mux) *chi.Mux {
 	return r
 }
 
-func getSavedShortUrlResponse(w http.ResponseWriter, r *http.Request, originalURL string, responseFunc func(w http.ResponseWriter, shotURL string)) {
+func getSavedShortURLResponse(w http.ResponseWriter, r *http.Request, originalURL string, responseFunc func(w http.ResponseWriter, shotURL string)) {
 	shotURL, code, err := handlers.GetShortURL(originalURL, r, config.GetConfig().BaseURL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
