@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/antonioo83/shot-url-service/config"
+	"github.com/antonioo83/shot-url-service/internal/handlers"
 	"github.com/antonioo83/shot-url-service/internal/models"
 	"log"
 	"os"
@@ -25,7 +26,7 @@ func SaveURL(model models.ShortURL, config config.Config) error {
 	if err != nil {
 		return err
 	}
-	defer p.file.Close()
+	defer handlers.FileClose(p.file)
 
 	err = p.encoder.Encode(&model)
 	if err != nil {
@@ -62,7 +63,7 @@ func LoadModels(database map[string]models.ShortURL, model models.ShortURL, conf
 	if err != nil {
 		return nil, err
 	}
-	defer consumer.file.Close()
+	defer handlers.FileClose(consumer.file)
 
 	for consumer.scanner.Scan() {
 		jsonString := consumer.scanner.Text()

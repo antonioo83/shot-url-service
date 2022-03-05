@@ -4,23 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"log"
 	"net/http"
 )
 
-func GetJsonRequest(key string, value string) []byte {
-	request := make(map[string]string)
-	request[key] = value
-	jsonResp, err := json.Marshal(request)
-	if err != nil {
-		log.Fatalf("Error happened in JSON marshal. Err: %s", err)
-	}
-
-	return jsonResp
-}
-
 func GetBody(r *http.Request) (string, error) {
-	defer r.Body.Close()
+	defer BodyClose(r.Body)
 	b, err := io.ReadAll(r.Body)
 
 	return string(b), err

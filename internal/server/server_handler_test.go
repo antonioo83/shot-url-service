@@ -48,19 +48,19 @@ func TestGetRouters(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, tt.wantPost.httpStatus, resp.StatusCode)
 		assert.Equal(t, ts.URL+"/"+tt.code, resultParameter)
-		resp.Body.Close()
+		handlers.BodyClose(resp.Body)
 
 		postRequest := getPostRequest(t, ts, "/", strings.NewReader(tt.originalURL))
 		resp, body := sendRequest(t, postRequest)
 		assert.Equal(t, tt.wantPost.httpStatus, resp.StatusCode)
 		assert.Equal(t, ts.URL+"/"+tt.code, body)
-		resp.Body.Close()
+		handlers.BodyClose(resp.Body)
 
 		getGetRequest := getGetRequest(t, ts, "/"+tt.code, nil)
 		resp, body = sendRequest(t, getGetRequest)
 		assert.Equal(t, tt.wantGet.httpStatus, resp.StatusCode)
 		assert.Equal(t, tt.originalURL, body)
-		resp.Body.Close()
+		handlers.BodyClose(resp.Body)
 	}
 }
 
@@ -76,7 +76,7 @@ func sendRequest(t *testing.T, req *http.Request) (*http.Response, string) {
 	respBody, err := ioutil.ReadAll(resp.Body)
 	require.NoError(t, err)
 
-	defer resp.Body.Close()
+	defer handlers.BodyClose(resp.Body)
 
 	return resp, string(respBody)
 }

@@ -7,10 +7,10 @@ import (
 
 var Database = make(map[string]models.ShortURL)
 
-func SaveURL(model models.ShortURL) bool {
+func SaveURL(model models.ShortURL) error {
 	Database[model.Code] = model
 
-	return true
+	return nil
 }
 
 func FindByCode(code string) (*models.ShortURL, error) {

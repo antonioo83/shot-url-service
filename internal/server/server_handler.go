@@ -33,40 +33,9 @@ func GetRouters() *chi.Mux {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))
 
-	r = getOriginalURLRoute(r)
 	r = getCreateShortURLRoute(r)
 	r = getCreateJsonShortURLRoute(r)
-
-	return r
-}
-
-func getCreateJsonShortURLRoute(r *chi.Mux) *chi.Mux {
-	r.Post("/api/shorten", func(w http.ResponseWriter, r *http.Request) {
-		originalURL, err := handlers.GetUrlParameter(r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		shotURL, code, err := handlers.GetShortURL(originalURL, r, config.GetConfig().BaseUrl)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		if localcache.IsHasInDatabase(code) == false {
-			var shortURL models.ShortURL
-			shortURL.Code = code
-			shortURL.OriginalURL = originalURL
-			shortURL.ShortURL = shotURL
-			localcache.SaveURL(shortURL)
-			filestore.SaveURL(shortURL, config.GetConfig())
-		}
-
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		logErr(w.Write(handlers.GetJsonResponse("result", shotURL)))
-	})
+	r = getOriginalURLRoute(r)
 
 	return r
 }
@@ -79,26 +48,62 @@ func getCreateShortURLRoute(r *chi.Mux) *chi.Mux {
 			return
 		}
 
-		shotURL, code, err := handlers.GetShortURL(originalURL, r, config.GetConfig().BaseUrl)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		if localcache.IsHasInDatabase(code) == false {
-			var shortURL models.ShortURL
-			shortURL.Code = code
-			shortURL.OriginalURL = originalURL
-			shortURL.ShortURL = shotURL
-			localcache.SaveURL(shortURL)
-			filestore.SaveURL(shortURL, config.GetConfig())
-		}
-
-		w.WriteHeader(http.StatusCreated)
-		logErr(w.Write([]byte(shotURL)))
+		getSavedShortUrlResponse(w, r, originalURL, func(w http.ResponseWriter, shotURL string) {
+			handlers.GetCreateShortURLResponse(w, shotURL)
+		})
 	})
 
 	return r
+}
+
+func getCreateJsonShortURLRoute(r *chi.Mux) *chi.Mux {
+	r.Post("/api/shorten", func(w http.ResponseWriter, r *http.Request) {
+		originalURL, err := handlers.GetUrlParameter(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		getSavedShortUrlResponse(w, r, originalURL, func(w http.ResponseWriter, shotURL string) {
+			handlers.GetCreateJsonShortURLResponse(w, shotURL)
+		})
+	})
+
+	return r
+}
+
+func getSavedShortUrlResponse(w http.ResponseWriter, r *http.Request, originalURL string, responseFunc func(w http.ResponseWriter, shotURL string)) {
+	shotURL, code, err := handlers.GetShortURL(originalURL, r, config.GetConfig().BaseUrl)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if localcache.IsHasInDatabase(code) == true {
+		responseFunc(w, shotURL)
+		return
+	}
+
+	var shortURL models.ShortURL
+	shortURL.Code = code
+	shortURL.OriginalURL = originalURL
+	shortURL.ShortURL = shotURL
+	err = saveToStorage(shortURL)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	responseFunc(w, shotURL)
+}
+
+func saveToStorage(shortURL models.ShortURL) error {
+	err := localcache.SaveURL(shortURL)
+	if config.GetConfig().IsUseFileStore == true {
+		err = filestore.SaveURL(shortURL, config.GetConfig())
+	}
+
+	return err
 }
 
 func getOriginalURLRoute(r *chi.Mux) *chi.Mux {
@@ -114,18 +119,8 @@ func getOriginalURLRoute(r *chi.Mux) *chi.Mux {
 			return
 		}
 
-		w.Header().Set("Location", model.OriginalURL)
-		w.WriteHeader(http.StatusTemporaryRedirect)
-		logErr(w.Write([]byte(model.OriginalURL)))
+		handlers.GetOriginalURLResponse(w, model.OriginalURL)
 	})
 
 	return r
-}
-
-func logErr(n int, err error) int {
-	if err != nil {
-		log.Printf("Write failed: %v", err)
-	}
-
-	return n
 }

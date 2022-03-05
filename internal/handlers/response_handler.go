@@ -4,30 +4,38 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"net/http"
 )
 
-func GetJsonResponse(key string, value string) []byte {
+func GetCreateJsonShortURLResponse(w http.ResponseWriter, shotURL string) {
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	jsonResponse, err := getJsonResponse("result", shotURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	LogErr(w.Write(jsonResponse))
+}
+
+func getJsonResponse(key string, value string) ([]byte, error) {
 	resp := make(map[string]string)
 	resp[key] = value
 	jsonResp, err := json.Marshal(resp)
 	if err != nil {
-		log.Fatalf("Error happened in JSON marshal. Err: %s", err)
+		return jsonResp, errors.New("Error happened in JSON marshal")
 	}
 
-	return jsonResp
+	return jsonResp, nil
 }
 
-type resultResponse struct {
-	Result string
+func GetCreateShortURLResponse(w http.ResponseWriter, shotURL string) {
+	w.WriteHeader(http.StatusCreated)
+	LogErr(w.Write([]byte(shotURL)))
 }
 
-func GetResultParameter(body string) (string, error) {
-	var response resultResponse
-	err := json.Unmarshal([]byte(body), &response)
-	//err := decoder.Decode(&response)
-	if err != nil {
-		return "", errors.New("I can't decode json request:" + err.Error())
-	}
-
-	return response.Result, nil
+func GetOriginalURLResponse(w http.ResponseWriter, originalURL string) {
+	w.Header().Set("Location", originalURL)
+	w.WriteHeader(http.StatusTemporaryRedirect)
+	LogErr(w.Write([]byte(originalURL)))
 }
