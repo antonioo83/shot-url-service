@@ -17,7 +17,7 @@ type producer struct {
 }
 
 func SaveURL(model models.ShortURL, config config.Config) error {
-	if config.IsUseFileStore == false {
+	if !config.IsUseFileStore {
 
 		return nil
 	}
@@ -54,7 +54,7 @@ type consumer struct {
 }
 
 func LoadModels(database map[string]models.ShortURL, model models.ShortURL, config config.Config) (map[string]models.ShortURL, error) {
-	if config.IsUseFileStore == false {
+	if !config.IsUseFileStore {
 
 		return database, nil
 	}
@@ -100,9 +100,8 @@ func (c *consumer) ReadEvent() (*models.ShortURL, error) {
 	if !c.scanner.Scan() {
 		return nil, c.scanner.Err()
 	}
-	// читаем данные из scanner
-	data := c.scanner.Bytes()
 
+	data := c.scanner.Bytes()
 	model := models.ShortURL{}
 	err := json.Unmarshal(data, &model)
 	if err != nil {

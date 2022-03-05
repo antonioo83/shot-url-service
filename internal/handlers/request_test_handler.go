@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-func GetJsonRequest(key string, value string) []byte {
+func GetJSONRequest(key string, value string) []byte {
 	request := make(map[string]string)
 	request[key] = value
 	jsonResp, err := json.Marshal(request)

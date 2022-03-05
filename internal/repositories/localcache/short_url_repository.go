@@ -24,9 +24,6 @@ func FindByCode(code string) (*models.ShortURL, error) {
 
 func IsHasInDatabase(code string) bool {
 	_, ok := Database[code]
-	if !ok {
-		return false
-	}
 
-	return true
+	return ok
 }

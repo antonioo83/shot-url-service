@@ -34,7 +34,7 @@ func GetRouters() *chi.Mux {
 	r.Use(middleware.Timeout(60 * time.Second))
 
 	r = getCreateShortURLRoute(r)
-	r = getCreateJsonShortURLRoute(r)
+	r = getCreateJSONShortURLRoute(r)
 	r = getOriginalURLRoute(r)
 
 	return r
@@ -56,16 +56,16 @@ func getCreateShortURLRoute(r *chi.Mux) *chi.Mux {
 	return r
 }
 
-func getCreateJsonShortURLRoute(r *chi.Mux) *chi.Mux {
+func getCreateJSONShortURLRoute(r *chi.Mux) *chi.Mux {
 	r.Post("/api/shorten", func(w http.ResponseWriter, r *http.Request) {
-		originalURL, err := handlers.GetUrlParameter(r)
+		originalURL, err := handlers.GetURLParameter(r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		getSavedShortUrlResponse(w, r, originalURL, func(w http.ResponseWriter, shotURL string) {
-			handlers.GetCreateJsonShortURLResponse(w, shotURL)
+			handlers.GetCreateJSONShortURLResponse(w, shotURL)
 		})
 	})
 
@@ -73,13 +73,13 @@ func getCreateJsonShortURLRoute(r *chi.Mux) *chi.Mux {
 }
 
 func getSavedShortUrlResponse(w http.ResponseWriter, r *http.Request, originalURL string, responseFunc func(w http.ResponseWriter, shotURL string)) {
-	shotURL, code, err := handlers.GetShortURL(originalURL, r, config.GetConfig().BaseUrl)
+	shotURL, code, err := handlers.GetShortURL(originalURL, r, config.GetConfig().BaseURL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	if localcache.IsHasInDatabase(code) == true {
+	if localcache.IsHasInDatabase(code) {
 		responseFunc(w, shotURL)
 		return
 	}
@@ -99,7 +99,7 @@ func getSavedShortUrlResponse(w http.ResponseWriter, r *http.Request, originalUR
 
 func saveToStorage(shortURL models.ShortURL) error {
 	err := localcache.SaveURL(shortURL)
-	if config.GetConfig().IsUseFileStore == true {
+	if config.GetConfig().IsUseFileStore {
 		err = filestore.SaveURL(shortURL, config.GetConfig())
 	}
 

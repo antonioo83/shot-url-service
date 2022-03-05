@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -41,26 +42,32 @@ func TestGetRouters(t *testing.T) {
 	defer ts.Close()
 
 	for _, tt := range tests {
-		jsonData := strings.NewReader(string(handlers.GetJsonRequest("url", tt.originalURL)))
-		jsonRequest := getJsonPostRequest(t, ts, "/api/shorten", jsonData)
+		jsonData := strings.NewReader(string(handlers.GetJSONRequest("url", tt.originalURL)))
+		jsonRequest := getJSONPostRequest(t, ts, "/api/shorten", jsonData)
 		resp, jsonResponse := sendRequest(t, jsonRequest)
 		resultParameter, err := handlers.GetResultParameter(jsonResponse)
 		require.NoError(t, err)
 		assert.Equal(t, tt.wantPost.httpStatus, resp.StatusCode)
 		assert.Equal(t, ts.URL+"/"+tt.code, resultParameter)
-		handlers.BodyClose(resp.Body)
+		if err := resp.Body.Close(); err != nil {
+			log.Fatal(err)
+		}
 
 		postRequest := getPostRequest(t, ts, "/", strings.NewReader(tt.originalURL))
 		resp, body := sendRequest(t, postRequest)
 		assert.Equal(t, tt.wantPost.httpStatus, resp.StatusCode)
 		assert.Equal(t, ts.URL+"/"+tt.code, body)
-		handlers.BodyClose(resp.Body)
+		if err := resp.Body.Close(); err != nil {
+			log.Fatal(err)
+		}
 
 		getGetRequest := getGetRequest(t, ts, "/"+tt.code, nil)
 		resp, body = sendRequest(t, getGetRequest)
 		assert.Equal(t, tt.wantGet.httpStatus, resp.StatusCode)
 		assert.Equal(t, tt.originalURL, body)
-		handlers.BodyClose(resp.Body)
+		if err := resp.Body.Close(); err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
@@ -96,7 +103,7 @@ func getGetRequest(t *testing.T, ts *httptest.Server, path string, body io.Reade
 	return req
 }
 
-func getJsonPostRequest(t *testing.T, ts *httptest.Server, path string, body io.Reader) *http.Request {
+func getJSONPostRequest(t *testing.T, ts *httptest.Server, path string, body io.Reader) *http.Request {
 	req, err := http.NewRequest("POST", ts.URL+path, body)
 	req.Header.Add("Content-Type", "application/json")
 	require.NoError(t, err)

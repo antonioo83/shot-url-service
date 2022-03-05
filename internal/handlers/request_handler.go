@@ -14,12 +14,12 @@ func GetBody(r *http.Request) (string, error) {
 	return string(b), err
 }
 
-type shortUrlRequest struct {
+type shortURLRequest struct {
 	Url string
 }
 
-func GetUrlParameter(r *http.Request) (string, error) {
-	var request shortUrlRequest
+func GetURLParameter(r *http.Request) (string, error) {
+	var request shortURLRequest
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&request)
 	if err != nil {

@@ -7,10 +7,10 @@ import (
 	"net/http"
 )
 
-func GetCreateJsonShortURLResponse(w http.ResponseWriter, shotURL string) {
+func GetCreateJSONShortURLResponse(w http.ResponseWriter, shotURL string) {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	jsonResponse, err := getJsonResponse("result", shotURL)
+	jsonResponse, err := getJSONResponse("result", shotURL)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -18,7 +18,7 @@ func GetCreateJsonShortURLResponse(w http.ResponseWriter, shotURL string) {
 	LogErr(w.Write(jsonResponse))
 }
 
-func getJsonResponse(key string, value string) ([]byte, error) {
+func getJSONResponse(key string, value string) ([]byte, error) {
 	resp := make(map[string]string)
 	resp[key] = value
 	jsonResp, err := json.Marshal(resp)
