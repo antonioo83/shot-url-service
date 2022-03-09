@@ -13,7 +13,7 @@ func GetResultParameter(body string) (string, error) {
 	var response resultResponse
 	err := json.Unmarshal([]byte(body), &response)
 	if err != nil {
-		return "", fmt.Errorf("I can't decode json request: %w", err)
+		return "", fmt.Errorf("i can't decode json request: %w", err)
 	}
 
 	return response.Result, nil

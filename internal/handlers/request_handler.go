@@ -24,7 +24,7 @@ func GetOriginalURLFromBody(r *http.Request) (string, error) {
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&request)
 	if err != nil {
-		return "", fmt.Errorf("I can't decode json request: %w", err)
+		return "", fmt.Errorf("i can't decode json request: %w", err)
 	}
 
 	return request.URL, nil
