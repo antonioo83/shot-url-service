@@ -1,7 +1,9 @@
 package server
 
 import (
+	"github.com/antonioo83/shot-url-service/config"
 	"github.com/antonioo83/shot-url-service/internal/handlers"
+	"github.com/antonioo83/shot-url-service/internal/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -37,13 +39,16 @@ func TestGetRouters(t *testing.T) {
 		},
 	}
 
-	r := GetRouters()
+	config := config.GetConfigSettings()
+	r := GetRouters(config)
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
 	for _, tt := range tests {
-		jsonData := strings.NewReader(string(handlers.GetJSONRequest("url", tt.originalURL)))
-		jsonRequest := getJSONPostRequest(t, ts, "/api/shorten", jsonData)
+		request, err := handlers.GetJSONRequest("url", tt.originalURL)
+		assert.NoError(t, err)
+
+		jsonRequest := getJSONPostRequest(t, ts, "/api/shorten", strings.NewReader(string(request)))
 		resp, jsonResponse := sendRequest(t, jsonRequest)
 		resultParameter, err := handlers.GetResultParameter(jsonResponse)
 		require.NoError(t, err)
@@ -83,7 +88,7 @@ func sendRequest(t *testing.T, req *http.Request) (*http.Response, string) {
 	respBody, err := ioutil.ReadAll(resp.Body)
 	require.NoError(t, err)
 
-	defer handlers.BodyClose(resp.Body)
+	defer utils.ResourceClose(resp.Body)
 
 	return resp, string(respBody)
 }

@@ -22,7 +22,7 @@ func FindByCode(code string) (*models.ShortURL, error) {
 	return &model, nil
 }
 
-func IsHasInDatabase(code string) bool {
+func IsInDatabase(code string) bool {
 	_, ok := Database[code]
 
 	return ok

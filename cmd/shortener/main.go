@@ -8,6 +8,7 @@ import (
 )
 
 func main() {
-	server.LoadModelsFromDatabase()
-	log.Fatal(http.ListenAndServe(config.GetConfig().ServerAddress, server.GetRouters()))
+	configSettings := config.GetConfigSettings()
+	server.LoadModelsFromDatabase(configSettings)
+	log.Fatal(http.ListenAndServe(configSettings.ServerAddress, server.GetRouters(configSettings)))
 }

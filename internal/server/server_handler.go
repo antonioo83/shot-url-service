@@ -13,9 +13,9 @@ import (
 	"time"
 )
 
-func LoadModelsFromDatabase() bool {
+func LoadModelsFromDatabase(config config.Config) bool {
 	var model models.ShortURL
-	_, err := filestore.LoadModels(localcache.Database, model, config.GetConfig())
+	_, err := filestore.LoadModels(localcache.Database, model, config)
 	if err != nil {
 		log.Fatal(err)
 
@@ -25,7 +25,7 @@ func LoadModelsFromDatabase() bool {
 	return true
 }
 
-func GetRouters() *chi.Mux {
+func GetRouters(config config.Config) *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
@@ -33,14 +33,14 @@ func GetRouters() *chi.Mux {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))
 
-	r = getCreateShortURLRoute(r)
-	r = getCreateJSONShortURLRoute(r)
+	r = getCreateShortURLRoute(r, config)
+	r = getCreateJSONShortURLRoute(r, config)
 	r = getOriginalURLRoute(r)
 
 	return r
 }
 
-func getCreateShortURLRoute(r *chi.Mux) *chi.Mux {
+func getCreateShortURLRoute(r *chi.Mux, config config.Config) *chi.Mux {
 	r.Post("/", func(w http.ResponseWriter, r *http.Request) {
 		originalURL, err := handlers.GetBody(r)
 		if err != nil {
@@ -48,7 +48,7 @@ func getCreateShortURLRoute(r *chi.Mux) *chi.Mux {
 			return
 		}
 
-		getSavedShortURLResponse(w, r, originalURL, func(w http.ResponseWriter, shotURL string) {
+		getSavedShortURLResponse(w, r, config, originalURL, func(w http.ResponseWriter, shotURL string) {
 			handlers.GetCreateShortURLResponse(w, shotURL)
 		})
 	})
@@ -56,15 +56,15 @@ func getCreateShortURLRoute(r *chi.Mux) *chi.Mux {
 	return r
 }
 
-func getCreateJSONShortURLRoute(r *chi.Mux) *chi.Mux {
+func getCreateJSONShortURLRoute(r *chi.Mux, config config.Config) *chi.Mux {
 	r.Post("/api/shorten", func(w http.ResponseWriter, r *http.Request) {
-		originalURL, err := handlers.GetURLParameter(r)
+		originalURL, err := handlers.GetOriginalURLFromBody(r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		getSavedShortURLResponse(w, r, originalURL, func(w http.ResponseWriter, shotURL string) {
+		getSavedShortURLResponse(w, r, config, originalURL, func(w http.ResponseWriter, shotURL string) {
 			handlers.GetCreateJSONShortURLResponse(w, shotURL)
 		})
 	})
@@ -72,14 +72,14 @@ func getCreateJSONShortURLRoute(r *chi.Mux) *chi.Mux {
 	return r
 }
 
-func getSavedShortURLResponse(w http.ResponseWriter, r *http.Request, originalURL string, responseFunc func(w http.ResponseWriter, shotURL string)) {
-	shotURL, code, err := handlers.GetShortURL(originalURL, r, config.GetConfig().BaseURL)
+func getSavedShortURLResponse(w http.ResponseWriter, r *http.Request, config config.Config, originalURL string, responseFunc func(w http.ResponseWriter, shotURL string)) {
+	shotURL, code, err := handlers.GetShortURL(originalURL, r, config.BaseURL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	if localcache.IsHasInDatabase(code) {
+	if localcache.IsInDatabase(code) {
 		responseFunc(w, shotURL)
 		return
 	}
@@ -88,7 +88,7 @@ func getSavedShortURLResponse(w http.ResponseWriter, r *http.Request, originalUR
 	shortURL.Code = code
 	shortURL.OriginalURL = originalURL
 	shortURL.ShortURL = shotURL
-	err = saveToStorage(shortURL)
+	err = saveToStorage(config, shortURL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -97,18 +97,18 @@ func getSavedShortURLResponse(w http.ResponseWriter, r *http.Request, originalUR
 	responseFunc(w, shotURL)
 }
 
-func saveToStorage(shortURL models.ShortURL) error {
+func saveToStorage(config config.Config, shortURL models.ShortURL) error {
 	err := localcache.SaveURL(shortURL)
-	if config.GetConfig().IsUseFileStore {
-		err = filestore.SaveURL(shortURL, config.GetConfig())
+	if config.IsUseFileStore {
+		err = filestore.SaveURL(shortURL, config)
 	}
 
 	return err
 }
 
 func getOriginalURLRoute(r *chi.Mux) *chi.Mux {
-	r.Get("/{httpStatus}", func(w http.ResponseWriter, r *http.Request) {
-		code := chi.URLParam(r, "httpStatus")
+	r.Get("/{code}", func(w http.ResponseWriter, r *http.Request) {
+		code := chi.URLParam(r, "code")
 		if code == "" {
 			http.Error(w, "httpStatus param is missed", http.StatusBadRequest)
 			return

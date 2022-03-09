@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 )
 
 type resultResponse struct {
@@ -13,7 +13,7 @@ func GetResultParameter(body string) (string, error) {
 	var response resultResponse
 	err := json.Unmarshal([]byte(body), &response)
 	if err != nil {
-		return "", errors.New("I can't decode json request:" + err.Error())
+		return "", fmt.Errorf("I can't decode json request: %w", err)
 	}
 
 	return response.Result, nil

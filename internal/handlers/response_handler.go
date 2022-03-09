@@ -3,7 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
-	"log"
+	"github.com/antonioo83/shot-url-service/internal/utils"
 	"net/http"
 )
 
@@ -12,10 +12,11 @@ func GetCreateJSONShortURLResponse(w http.ResponseWriter, shotURL string) {
 	w.WriteHeader(http.StatusCreated)
 	jsonResponse, err := getJSONResponse("result", shotURL)
 	if err != nil {
-		log.Fatal(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	LogErr(w.Write(jsonResponse))
+	utils.LogErr(w.Write(jsonResponse))
 }
 
 func getJSONResponse(key string, value string) ([]byte, error) {
@@ -31,11 +32,11 @@ func getJSONResponse(key string, value string) ([]byte, error) {
 
 func GetCreateShortURLResponse(w http.ResponseWriter, shotURL string) {
 	w.WriteHeader(http.StatusCreated)
-	LogErr(w.Write([]byte(shotURL)))
+	utils.LogErr(w.Write([]byte(shotURL)))
 }
 
 func GetOriginalURLResponse(w http.ResponseWriter, originalURL string) {
 	w.Header().Set("Location", originalURL)
 	w.WriteHeader(http.StatusTemporaryRedirect)
-	LogErr(w.Write([]byte(originalURL)))
+	utils.LogErr(w.Write([]byte(originalURL)))
 }

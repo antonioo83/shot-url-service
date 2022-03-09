@@ -11,19 +11,14 @@ type Config struct {
 	BaseURL         string `env:"BASE_URL"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 	IsUseFileStore  bool
-	isInitialized   bool
 }
 
 var cfg Config
 
-func GetConfig() Config {
+func GetConfigSettings() Config {
 	const ServerAddress string = ":8080"
 	const BaseURL string = ""
 	//const FileStoragePath string = "..\\data\\database.txt"
-
-	if cfg.isInitialized {
-		return cfg
-	}
 
 	err := env.Parse(&cfg)
 	if err != nil {
@@ -46,8 +41,6 @@ func GetConfig() Config {
 	if cfg.FileStoragePath == "" {
 		cfg.IsUseFileStore = false
 	}
-
-	cfg.isInitialized = true
 
 	return cfg
 }

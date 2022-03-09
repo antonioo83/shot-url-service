@@ -4,10 +4,10 @@ import (
 	"bufio"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/antonioo83/shot-url-service/config"
-	"github.com/antonioo83/shot-url-service/internal/handlers"
 	"github.com/antonioo83/shot-url-service/internal/models"
-	"log"
+	"github.com/antonioo83/shot-url-service/internal/utils"
 	"os"
 )
 
@@ -26,7 +26,7 @@ func SaveURL(model models.ShortURL, config config.Config) error {
 	if err != nil {
 		return err
 	}
-	defer handlers.FileClose(p.file)
+	defer utils.ResourceClose(p.file)
 
 	err = p.encoder.Encode(&model)
 	if err != nil {
@@ -63,7 +63,7 @@ func LoadModels(database map[string]models.ShortURL, model models.ShortURL, conf
 	if err != nil {
 		return nil, err
 	}
-	defer handlers.FileClose(consumer.file)
+	defer utils.ResourceClose(consumer.file)
 
 	for consumer.scanner.Scan() {
 		jsonString := consumer.scanner.Text()
@@ -77,7 +77,7 @@ func LoadModels(database map[string]models.ShortURL, model models.ShortURL, conf
 	}
 
 	if err := consumer.scanner.Err(); err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("scanner of a consumer got the error: %w", err)
 	}
 
 	return database, nil

@@ -1,4 +1,4 @@
-package handlers
+package utils
 
 import (
 	"io"
@@ -13,14 +13,8 @@ func LogErr(n int, err error) int {
 	return n
 }
 
-func BodyClose(body io.ReadCloser) {
+func ResourceClose(body io.ReadCloser) {
 	if err := body.Close(); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func FileClose(file io.Closer) {
-	if err := file.Close(); err != nil {
-		log.Fatal(err)
+		log.Printf("Can't close resource: %v", err)
 	}
 }
