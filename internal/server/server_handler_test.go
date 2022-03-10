@@ -3,6 +3,7 @@ package server
 import (
 	"github.com/antonioo83/shot-url-service/config"
 	"github.com/antonioo83/shot-url-service/internal/handlers"
+	"github.com/antonioo83/shot-url-service/internal/repositories/factory"
 	"github.com/antonioo83/shot-url-service/internal/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -40,7 +41,8 @@ func TestGetRouters(t *testing.T) {
 	}
 
 	config := config.GetConfigSettings()
-	r := GetRouters(config)
+	repository := factory.GetRepository(config)
+	r := GetRouters(config, repository)
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 

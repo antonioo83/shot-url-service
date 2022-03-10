@@ -1,34 +1,26 @@
 package filestore
 
 import (
-	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/antonioo83/shot-url-service/config"
 	"github.com/antonioo83/shot-url-service/internal/models"
+	"github.com/antonioo83/shot-url-service/internal/repositories/interfaces"
 	"github.com/antonioo83/shot-url-service/internal/utils"
-	"os"
 )
 
-type producer struct {
-	file    *os.File
-	encoder *json.Encoder
+type fileRepository struct {
+	p producer
+	c consumer
 }
 
-func SaveURL(model models.ShortURL, config config.Config) error {
-	if !config.IsUseFileStore {
+func NewFileRepository(c consumer, p producer) interfaces.ShotURLRepository {
+	return &fileRepository{p, c}
+}
 
-		return nil
-	}
-
-	p, err := getProducer(config.FileStoragePath)
-	if err != nil {
-		return err
-	}
-	defer utils.ResourceClose(p.file)
-
-	err = p.encoder.Encode(&model)
+func (r fileRepository) SaveURL(model models.ShortURL) error {
+	defer utils.ResourceClose(r.p.file)
+	err := r.p.encoder.Encode(&model)
 	if err != nil {
 		return err
 	}
@@ -36,77 +28,31 @@ func SaveURL(model models.ShortURL, config config.Config) error {
 	return nil
 }
 
-func getProducer(fileName string) (*producer, error) {
-	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
-	if err != nil {
-		return nil, err
-	}
-	return &producer{
-		file:    file,
-		encoder: json.NewEncoder(file),
-	}, nil
-}
-
-type consumer struct {
-	file    *os.File
-	decoder *json.Decoder
-	scanner *bufio.Scanner
-}
-
-func LoadModels(database map[string]models.ShortURL, model models.ShortURL, config config.Config) (map[string]models.ShortURL, error) {
-	if !config.IsUseFileStore {
-
-		return database, nil
-	}
-
-	consumer, err := getConsumer(config.FileStoragePath)
-	if err != nil {
-		return nil, err
-	}
-	defer utils.ResourceClose(consumer.file)
-
-	for consumer.scanner.Scan() {
-		jsonString := consumer.scanner.Text()
+func (r fileRepository) FindByCode(code string) (*models.ShortURL, error) {
+	model := models.ShortURL{}
+	defer utils.ResourceClose(r.c.file)
+	for r.c.scanner.Scan() {
+		jsonString := r.c.scanner.Text()
 		if jsonString != "" {
 			err := json.Unmarshal([]byte(jsonString), &model)
 			if err != nil {
 				return nil, errors.New("I can't decode json request:" + err.Error())
 			}
-			database[model.Code] = model
+			if model.Code == code {
+				break
+			}
 		}
 	}
 
-	if err := consumer.scanner.Err(); err != nil {
+	if err := r.c.scanner.Err(); err != nil {
 		return nil, fmt.Errorf("scanner of a consumer got the error: %w", err)
 	}
 
-	return database, nil
+	return nil, nil
 }
 
-func getConsumer(fileName string) (*consumer, error) {
-	file, err := os.OpenFile(fileName, os.O_RDONLY|os.O_CREATE, 0777)
-	if err != nil {
-		return nil, err
-	}
-	return &consumer{
-		file:    file,
-		decoder: json.NewDecoder(file),
-		scanner: bufio.NewScanner(file),
-	}, nil
-}
+func (r fileRepository) IsInDatabase(code string) (bool, error) {
+	model, err := r.FindByCode(code)
 
-func (c *consumer) ReadEvent() (*models.ShortURL, error) {
-	// одиночное сканирование до следующей строки
-	if !c.scanner.Scan() {
-		return nil, c.scanner.Err()
-	}
-
-	data := c.scanner.Bytes()
-	model := models.ShortURL{}
-	err := json.Unmarshal(data, &model)
-	if err != nil {
-		return nil, err
-	}
-
-	return &model, nil
+	return model == nil, err
 }

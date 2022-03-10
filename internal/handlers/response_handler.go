@@ -3,20 +3,38 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"github.com/antonioo83/shot-url-service/config"
+	"github.com/antonioo83/shot-url-service/internal/models"
+	"github.com/antonioo83/shot-url-service/internal/repositories/interfaces"
 	"github.com/antonioo83/shot-url-service/internal/utils"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 )
 
-func GetCreateJSONShortURLResponse(w http.ResponseWriter, shotURL string) {
-	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	jsonResponse, err := getJSONResponse("result", shotURL)
+func GetCreateJSONShortURLResponse(w http.ResponseWriter, r *http.Request, config config.Config, repository interfaces.ShotURLRepository) {
+	originalURL, err := GetOriginalURLFromBody(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	utils.LogErr(w.Write(jsonResponse))
+	getSavedShortURLResponse(savedShortURLParameters{
+		w,
+		r,
+		config,
+		repository,
+		originalURL,
+		func(w http.ResponseWriter, shotURL string) {
+			w.Header().Add("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			jsonResponse, err := getJSONResponse("result", shotURL)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			utils.LogErr(w.Write(jsonResponse))
+		},
+	})
 }
 
 func getJSONResponse(key string, value string) ([]byte, error) {
@@ -30,13 +48,79 @@ func getJSONResponse(key string, value string) ([]byte, error) {
 	return jsonResp, nil
 }
 
-func GetCreateShortURLResponse(w http.ResponseWriter, shotURL string) {
-	w.WriteHeader(http.StatusCreated)
-	utils.LogErr(w.Write([]byte(shotURL)))
+func GetCreateShortURLResponse(w http.ResponseWriter, r *http.Request, config config.Config, repository interfaces.ShotURLRepository) {
+	originalURL, err := GetBody(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	getSavedShortURLResponse(savedShortURLParameters{
+		w,
+		r,
+		config,
+		repository,
+		originalURL,
+		func(w http.ResponseWriter, shotURL string) {
+			w.WriteHeader(http.StatusCreated)
+			utils.LogErr(w.Write([]byte(shotURL)))
+		},
+	})
 }
 
-func GetOriginalURLResponse(w http.ResponseWriter, originalURL string) {
-	w.Header().Set("Location", originalURL)
+type savedShortURLParameters struct {
+	rWriter      http.ResponseWriter
+	request      *http.Request
+	config       config.Config
+	repository   interfaces.ShotURLRepository
+	originalURL  string
+	responseFunc func(w http.ResponseWriter, shotURL string)
+}
+
+func getSavedShortURLResponse(p savedShortURLParameters) {
+	shotURL, code, err := GetShortURL(p.originalURL, p.request, p.config.BaseURL)
+	if err != nil {
+		http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	isInDb, err := p.repository.IsInDatabase(code)
+	if err != nil {
+		http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if isInDb {
+		p.responseFunc(p.rWriter, shotURL)
+		return
+	}
+
+	var shortURL models.ShortURL
+	shortURL.Code = code
+	shortURL.OriginalURL = p.originalURL
+	shortURL.ShortURL = shotURL
+	err = p.repository.SaveURL(shortURL)
+	if err != nil {
+		http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	p.responseFunc(p.rWriter, shotURL)
+}
+
+func GetOriginalURLResponse(w http.ResponseWriter, r *http.Request, repository interfaces.ShotURLRepository) {
+	code := chi.URLParam(r, "code")
+	if code == "" {
+		http.Error(w, "httpStatus param is missed", http.StatusBadRequest)
+		return
+	}
+	model, err := repository.FindByCode(code)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Location", model.OriginalURL)
 	w.WriteHeader(http.StatusTemporaryRedirect)
-	utils.LogErr(w.Write([]byte(originalURL)))
+	utils.LogErr(w.Write([]byte(model.OriginalURL)))
 }
