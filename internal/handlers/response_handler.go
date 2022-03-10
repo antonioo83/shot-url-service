@@ -119,6 +119,9 @@ func GetOriginalURLResponse(w http.ResponseWriter, r *http.Request, repository i
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	if model == nil {
+		http.Error(w, "can't find model for the code: %s"+code, http.StatusNoContent)
+	}
 
 	w.Header().Set("Location", model.OriginalURL)
 	w.WriteHeader(http.StatusTemporaryRedirect)
