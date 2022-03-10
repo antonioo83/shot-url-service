@@ -3,21 +3,34 @@ package localcache
 import (
 	"errors"
 	"github.com/antonioo83/shot-url-service/internal/models"
+	"github.com/antonioo83/shot-url-service/internal/repositories/interfaces"
 )
 
-var database = make(map[string]models.ShortURL)
-
-func SaveURL(model models.ShortURL) bool {
-	database[model.Code] = model
-
-	return true
+type memoryRepository struct {
+	buffer map[string]models.ShortURL
 }
 
-func FindByCode(code string) (*models.ShortURL, error) {
-	model, ok := database[code]
+func NewMemoryRepository(m map[string]models.ShortURL) interfaces.ShotURLRepository {
+	return &memoryRepository{m}
+}
+
+func (m *memoryRepository) SaveURL(model models.ShortURL) error {
+	m.buffer[model.Code] = model
+
+	return nil
+}
+
+func (m *memoryRepository) FindByCode(code string) (*models.ShortURL, error) {
+	model, ok := m.buffer[code]
 	if !ok {
-		return nil, errors.New("Can't find model for the code:" + code)
+		return nil, errors.New("Can't find model in buffer for the code:" + code)
 	}
 
 	return &model, nil
+}
+
+func (m *memoryRepository) IsInDatabase(code string) (bool, error) {
+	_, ok := m.buffer[code]
+
+	return ok, nil
 }

@@ -9,9 +9,14 @@ import (
 	"net/http"
 )
 
-func GetShortURL(originalURL string, r *http.Request) (string, string, error) {
+func GetShortURL(originalURL string, r *http.Request, newBaseURL string) (string, string, error) {
 	urlID, err := generateShortLink(originalURL, "userId")
-	return "http://" + r.Host + "/" + urlID, urlID, err
+
+	if newBaseURL == "" {
+		return "http://" + r.Host + "/" + urlID, urlID, err
+	}
+
+	return newBaseURL + "/" + urlID, urlID, err
 }
 
 func generateShortLink(initialLink string, userID string) (string, error) {
