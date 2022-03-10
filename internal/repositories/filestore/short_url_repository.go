@@ -55,7 +55,7 @@ func (r fileRepository) FindByCode(code string) (*models.ShortURL, error) {
 		return nil, fmt.Errorf("scanner of a consumer got the error: %w", err)
 	}
 
-	return nil, fmt.Errorf("can't find model for the code: %s", code)
+	return nil, fmt.Errorf("can't find model in filestore for the code: %s", code)
 }
 
 func (r fileRepository) IsInDatabase(code string) (bool, error) {

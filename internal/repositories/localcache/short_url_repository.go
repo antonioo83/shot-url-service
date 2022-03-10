@@ -23,7 +23,7 @@ func (m *memoryRepository) SaveURL(model models.ShortURL) error {
 func (m *memoryRepository) FindByCode(code string) (*models.ShortURL, error) {
 	model, ok := m.buffer[code]
 	if !ok {
-		return nil, errors.New("Can't find model for the code:" + code)
+		return nil, errors.New("Can't find model in buffer for the code:" + code)
 	}
 
 	return &model, nil
