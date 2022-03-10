@@ -43,7 +43,7 @@ func (r fileRepository) FindByCode(code string) (*models.ShortURL, error) {
 		if jsonString != "" {
 			err := json.Unmarshal([]byte(jsonString), &model)
 			if err != nil {
-				return nil, fmt.Errorf("I can't decode json request: %s", err.Error())
+				return nil, fmt.Errorf("i can't decode json request: %s", err.Error())
 			}
 			if model.Code == code {
 				return &model, nil

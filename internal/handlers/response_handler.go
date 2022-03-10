@@ -84,13 +84,13 @@ func getSavedShortURLResponse(p savedShortURLParameters) {
 		return
 	}
 
-	isInDb, err := p.repository.IsInDatabase(code)
+	isInDB, err := p.repository.IsInDatabase(code)
 	if err != nil {
 		http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	if isInDb {
+	if isInDB {
 		p.responseFunc(p.rWriter, shotURL)
 		return
 	}
@@ -121,9 +121,9 @@ func GetOriginalURLResponse(w http.ResponseWriter, r *http.Request, repository i
 	}
 	if model == nil {
 		http.Error(w, "can't find model for the code: %s"+code, http.StatusNoContent)
+	} else {
+		w.Header().Set("Location", model.OriginalURL)
+		w.WriteHeader(http.StatusTemporaryRedirect)
+		utils.LogErr(w.Write([]byte(model.OriginalURL)))
 	}
-
-	w.Header().Set("Location", model.OriginalURL)
-	w.WriteHeader(http.StatusTemporaryRedirect)
-	utils.LogErr(w.Write([]byte(model.OriginalURL)))
 }
