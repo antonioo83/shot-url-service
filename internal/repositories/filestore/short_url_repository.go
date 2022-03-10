@@ -2,7 +2,6 @@ package filestore
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/antonioo83/shot-url-service/internal/models"
 	"github.com/antonioo83/shot-url-service/internal/repositories/interfaces"
@@ -10,17 +9,20 @@ import (
 )
 
 type fileRepository struct {
-	p producer
-	c consumer
+	filename string
 }
 
-func NewFileRepository(c consumer, p producer) interfaces.ShotURLRepository {
-	return &fileRepository{p, c}
+func NewFileRepository(filename string) interfaces.ShotURLRepository {
+	return &fileRepository{filename}
 }
 
 func (r fileRepository) SaveURL(model models.ShortURL) error {
-	defer utils.ResourceClose(r.p.file)
-	err := r.p.encoder.Encode(&model)
+	producer, err := GetProducer(r.filename)
+	if err != nil {
+		return err
+	}
+	defer utils.ResourceClose(producer.file)
+	err = producer.encoder.Encode(&model)
 	if err != nil {
 		return err
 	}
@@ -30,29 +32,34 @@ func (r fileRepository) SaveURL(model models.ShortURL) error {
 
 func (r fileRepository) FindByCode(code string) (*models.ShortURL, error) {
 	model := models.ShortURL{}
-	defer utils.ResourceClose(r.c.file)
-	for r.c.scanner.Scan() {
-		jsonString := r.c.scanner.Text()
+	consumer, err := GetConsumer(r.filename)
+	if err != nil {
+		return nil, err
+	}
+	defer utils.ResourceClose(consumer.file)
+
+	for consumer.scanner.Scan() {
+		jsonString := consumer.scanner.Text()
 		if jsonString != "" {
 			err := json.Unmarshal([]byte(jsonString), &model)
 			if err != nil {
-				return nil, errors.New("I can't decode json request:" + err.Error())
+				return nil, fmt.Errorf("I can't decode json request: %s", err.Error())
 			}
 			if model.Code == code {
-				break
+				return &model, nil
 			}
 		}
 	}
 
-	if err := r.c.scanner.Err(); err != nil {
+	if err := consumer.scanner.Err(); err != nil {
 		return nil, fmt.Errorf("scanner of a consumer got the error: %w", err)
 	}
 
-	return nil, nil
+	return nil, fmt.Errorf("can't find model for the code: %s", code)
 }
 
 func (r fileRepository) IsInDatabase(code string) (bool, error) {
 	model, err := r.FindByCode(code)
 
-	return model == nil, err
+	return !(model == nil), err
 }
