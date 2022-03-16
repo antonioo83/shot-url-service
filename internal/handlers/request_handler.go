@@ -1,16 +1,17 @@
 package handlers
 
 import (
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	"github.com/antonioo83/shot-url-service/internal/utils"
 	"io"
 	"net/http"
 )
 
 func GetBody(r *http.Request) (string, error) {
-	defer utils.ResourceClose(r.Body)
-	b, err := io.ReadAll(r.Body)
+	b, err := uncompress(r)
+	//defer utils.ResourceClose(r.Body)
+	//b, err = io.ReadAll(r.Body)
 
 	return string(b), err
 }
@@ -28,4 +29,26 @@ func GetOriginalURLFromBody(r *http.Request) (string, error) {
 	}
 
 	return request.URL, nil
+}
+
+func uncompress(r *http.Request) ([]byte, error) {
+	var reader io.Reader
+
+	if r.Header.Get(`Content-Encoding`) == `gzip` {
+		gz, err := gzip.NewReader(r.Body)
+		if err != nil {
+			return []byte(""), err
+		}
+		reader = gz
+		defer gz.Close()
+	} else {
+		reader = r.Body
+	}
+
+	body, err := io.ReadAll(reader)
+	if err != nil {
+		return []byte(""), err
+	}
+
+	return body, nil
 }
