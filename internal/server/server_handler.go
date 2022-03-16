@@ -1,6 +1,7 @@
 package server
 
 import (
+	"compress/flate"
 	"github.com/antonioo83/shot-url-service/config"
 	"github.com/antonioo83/shot-url-service/internal/handlers"
 	"github.com/antonioo83/shot-url-service/internal/repositories/interfaces"
@@ -17,6 +18,9 @@ func GetRouters(config config.Config, repository interfaces.ShotURLRepository) *
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))
+
+	compressor := middleware.NewCompressor(flate.DefaultCompression)
+	r.Use(compressor.Handler)
 
 	r = getCreateShortURLRoute(r, config, repository)
 	r = getCreateJSONShortURLRoute(r, config, repository)
