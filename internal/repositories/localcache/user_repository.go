@@ -38,7 +38,7 @@ func (m *memoryUserRepository) IsInDatabase(code int) (bool, error) {
 func (m *memoryUserRepository) GetLastModel() (*models.User, error) {
 	lastModel, ok := m.buffer[len(m.buffer)-1]
 	if !ok {
-		return nil, nil
+		return &models.User{ID: 0}, nil
 	}
 
 	return &lastModel, nil
