@@ -18,3 +18,14 @@ func GetRepository(config config.Config) interfaces.ShotURLRepository {
 		return localcache.NewMemoryRepository(buffer)
 	}
 }
+
+func GetUserRepository(config config.Config) interfaces.UserRepository {
+	if config.IsUseFileStore {
+		return filestore.NewUserRepository(
+			config.UserFileStoragePath,
+		)
+	} else {
+		var userBuffer = make(map[int]models.User)
+		return localcache.NewMemoryUserRepository(userBuffer)
+	}
+}

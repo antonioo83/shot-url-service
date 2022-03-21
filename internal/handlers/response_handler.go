@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/antonioo83/shot-url-service/config"
+	"github.com/antonioo83/shot-url-service/internal/handlers/auth/cookie"
 	"github.com/antonioo83/shot-url-service/internal/models"
 	"github.com/antonioo83/shot-url-service/internal/repositories/interfaces"
 	"github.com/antonioo83/shot-url-service/internal/utils"
@@ -11,7 +12,7 @@ import (
 	"net/http"
 )
 
-func GetCreateJSONShortURLResponse(w http.ResponseWriter, r *http.Request, config config.Config, repository interfaces.ShotURLRepository) {
+func GetCreateJSONShortURLResponse(w http.ResponseWriter, r *http.Request, config config.Config, repository interfaces.ShotURLRepository, userRepository interfaces.UserRepository) {
 	originalURL, err := GetOriginalURLFromBody(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -23,6 +24,7 @@ func GetCreateJSONShortURLResponse(w http.ResponseWriter, r *http.Request, confi
 		r,
 		config,
 		repository,
+		userRepository,
 		originalURL,
 		func(w http.ResponseWriter, shotURL string) {
 			w.Header().Add("Content-Type", "application/json")
@@ -48,7 +50,7 @@ func getJSONResponse(key string, value string) ([]byte, error) {
 	return jsonResp, nil
 }
 
-func GetCreateShortURLResponse(w http.ResponseWriter, r *http.Request, config config.Config, repository interfaces.ShotURLRepository) {
+func GetCreateShortURLResponse(w http.ResponseWriter, r *http.Request, config config.Config, repository interfaces.ShotURLRepository, userRepository interfaces.UserRepository) {
 	originalURL, err := GetBody(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -60,6 +62,7 @@ func GetCreateShortURLResponse(w http.ResponseWriter, r *http.Request, config co
 		r,
 		config,
 		repository,
+		userRepository,
 		originalURL,
 		func(w http.ResponseWriter, shotURL string) {
 			w.WriteHeader(http.StatusCreated)
@@ -69,12 +72,13 @@ func GetCreateShortURLResponse(w http.ResponseWriter, r *http.Request, config co
 }
 
 type savedShortURLParameters struct {
-	rWriter      http.ResponseWriter
-	request      *http.Request
-	config       config.Config
-	repository   interfaces.ShotURLRepository
-	originalURL  string
-	responseFunc func(w http.ResponseWriter, shotURL string)
+	rWriter        http.ResponseWriter
+	request        *http.Request
+	config         config.Config
+	repository     interfaces.ShotURLRepository
+	userRepository interfaces.UserRepository
+	originalURL    string
+	responseFunc   func(w http.ResponseWriter, shotURL string)
 }
 
 func getSavedShortURLResponse(p savedShortURLParameters) {
@@ -95,8 +99,18 @@ func getSavedShortURLResponse(p savedShortURLParameters) {
 		return
 	}
 
+	user := getAuthUser(p.rWriter, p.request, p.userRepository)
+	if isInUser, _ := p.userRepository.IsInDatabase(user.CODE); !isInUser {
+		err = p.userRepository.Save(user)
+		if err != nil {
+			http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
 	var shortURL models.ShortURL
 	shortURL.Code = code
+	shortURL.UserCode = user.CODE
 	shortURL.OriginalURL = p.originalURL
 	shortURL.ShortURL = shotURL
 	err = p.repository.SaveURL(shortURL)
@@ -106,6 +120,28 @@ func getSavedShortURLResponse(p savedShortURLParameters) {
 	}
 
 	p.responseFunc(p.rWriter, shotURL)
+}
+
+func getAuthUser(rWriter http.ResponseWriter, request *http.Request, userRepository interfaces.UserRepository) models.User {
+	var user models.User
+	token := cookie.GetToken(request)
+	if token == "" || cookie.ValidateToken(token) == false {
+		lastModel, _ := userRepository.GetLastModel()
+		if lastModel.CODE == 0 {
+			user.CODE = 1
+			user.UID, _ = cookie.GenerateToken(user.CODE)
+		} else {
+			user = *lastModel
+			user.CODE = user.CODE + 1
+			user.UID, _ = cookie.GenerateToken(user.CODE)
+		}
+		cookie.SetToken(rWriter, user)
+	} else {
+		user.CODE = cookie.GetUserCode(token)
+		user.UID = token
+	}
+
+	return user
 }
 
 func GetOriginalURLResponse(w http.ResponseWriter, r *http.Request, repository interfaces.ShotURLRepository) {
@@ -126,4 +162,24 @@ func GetOriginalURLResponse(w http.ResponseWriter, r *http.Request, repository i
 		w.WriteHeader(http.StatusTemporaryRedirect)
 		utils.LogErr(w.Write([]byte(model.OriginalURL)))
 	}
+}
+
+func GetUserURLsResponse(w http.ResponseWriter, r *http.Request, repository interfaces.ShotURLRepository, userRepository interfaces.UserRepository) {
+	user := getAuthUser(w, r, userRepository)
+	models, _ := repository.FindAllByUserCode(user.CODE)
+
+	parseData := make([]map[string]interface{}, 0, 0)
+	for _, model := range *models {
+		var singleMap = make(map[string]interface{})
+		singleMap["short_url"] = model.ShortURL
+		singleMap["original_url"] = model.OriginalURL
+		parseData = append(parseData, singleMap)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	jsonResp, err := json.Marshal(parseData)
+	if err != nil {
+		http.Error(w, "httpStatus param is missed", http.StatusBadRequest)
+	}
+	utils.LogErr(w.Write(jsonResp))
 }

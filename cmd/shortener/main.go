@@ -11,5 +11,6 @@ import (
 func main() {
 	configSettings := config.GetConfigSettings()
 	repository := factory.GetRepository(configSettings)
-	log.Fatal(http.ListenAndServe(configSettings.ServerAddress, server.GetRouters(configSettings, repository)))
+	userRepository := factory.GetUserRepository(configSettings)
+	log.Fatal(http.ListenAndServe(configSettings.ServerAddress, server.GetRouters(configSettings, repository, userRepository)))
 }
