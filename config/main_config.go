@@ -20,7 +20,7 @@ func GetConfigSettings() Config {
 	const ServerAddress string = ":8080"
 	const BaseURL string = ""
 	//const FileStoragePath string = "..\\data\\short_url_database.txt"
-	const UserFileStoragePath string = "..\\data\\user_database.txt"
+	const UserFileStoragePath string = "user_database.txt"
 
 	err := env.Parse(&cfg)
 	if err != nil {
@@ -43,6 +43,8 @@ func GetConfigSettings() Config {
 	cfg.IsUseFileStore = true
 	if cfg.FileStoragePath == "" {
 		cfg.IsUseFileStore = false
+	} else {
+		cfg.UserFileStoragePath = UserFileStoragePath
 	}
 
 	return cfg
