@@ -58,6 +58,35 @@ func (r fileRepository) FindByCode(code string) (*models.ShortURL, error) {
 	return nil, nil
 }
 
+func (r fileRepository) FindAllByUserCode(userCode int) (*map[string]models.ShortURL, error) {
+	var model = models.ShortURL{}
+	var models = map[string]models.ShortURL{}
+	consumer, err := GetConsumer(r.filename)
+	if err != nil {
+		return nil, err
+	}
+	defer utils.ResourceClose(consumer.file)
+
+	for consumer.scanner.Scan() {
+		jsonString := consumer.scanner.Text()
+		if jsonString != "" {
+			err := json.Unmarshal([]byte(jsonString), &model)
+			if err != nil {
+				return nil, fmt.Errorf("i can't decode json request: %s", err.Error())
+			}
+			if model.UserCode == userCode {
+				models[model.Code] = model
+			}
+		}
+	}
+
+	if err := consumer.scanner.Err(); err != nil {
+		return nil, fmt.Errorf("scanner of a consumer got the error: %w", err)
+	}
+
+	return &models, nil
+}
+
 func (r fileRepository) IsInDatabase(code string) (bool, error) {
 	model, err := r.FindByCode(code)
 

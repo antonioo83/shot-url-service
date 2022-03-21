@@ -29,6 +29,17 @@ func (m *memoryRepository) FindByCode(code string) (*models.ShortURL, error) {
 	return &model, nil
 }
 
+func (m *memoryRepository) FindAllByUserCode(userCode int) (*map[string]models.ShortURL, error) {
+	var models map[string]models.ShortURL
+	for _, model := range m.buffer {
+		if model.UserCode == userCode {
+			models[model.Code] = model
+		}
+	}
+
+	return &models, nil
+}
+
 func (m *memoryRepository) IsInDatabase(code string) (bool, error) {
 	_, ok := m.buffer[code]
 
