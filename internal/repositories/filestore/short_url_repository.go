@@ -60,7 +60,7 @@ func (r fileRepository) FindByCode(code string) (*models.ShortURL, error) {
 
 func (r fileRepository) FindAllByUserCode(userCode int) (*map[string]models.ShortURL, error) {
 	var model = models.ShortURL{}
-	var models = map[string]models.ShortURL{}
+	var models = make(map[string]models.ShortURL)
 	consumer, err := GetConsumer(r.filename)
 	if err != nil {
 		return nil, err

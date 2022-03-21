@@ -167,6 +167,10 @@ func GetOriginalURLResponse(w http.ResponseWriter, r *http.Request, repository i
 func GetUserURLsResponse(w http.ResponseWriter, r *http.Request, repository interfaces.ShotURLRepository, userRepository interfaces.UserRepository) {
 	user := getAuthUser(w, r, userRepository)
 	models, _ := repository.FindAllByUserCode(user.CODE)
+	if len(*models) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
 
 	parseData := make([]map[string]interface{}, 0, 0)
 	for _, model := range *models {
