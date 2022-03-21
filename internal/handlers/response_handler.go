@@ -176,6 +176,7 @@ func GetUserURLsResponse(w http.ResponseWriter, r *http.Request, repository inte
 		parseData = append(parseData, singleMap)
 	}
 
+	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	jsonResp, err := json.Marshal(parseData)
 	if err != nil {
