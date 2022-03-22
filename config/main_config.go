@@ -34,6 +34,7 @@ func GetConfigSettings() Config {
 	flag.StringVar(&cfg.FileStoragePath, "f", cfg.FileStoragePath, "Full filepath to the file storage")
 	flag.StringVar(&cfg.UserFileStoragePath, "fu", cfg.UserFileStoragePath, "Full filepath to the user file storage")
 	flag.StringVar(&cfg.DatabaseDsn, "d", cfg.DatabaseDsn, "Database port")
+	flag.Parse()
 	if cfg.ServerAddress == "" {
 		cfg.ServerAddress = ServerAddress
 	}
