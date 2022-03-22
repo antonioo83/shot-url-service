@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"github.com/antonioo83/shot-url-service/config"
@@ -187,4 +188,18 @@ func GetUserURLsResponse(w http.ResponseWriter, r *http.Request, repository inte
 		http.Error(w, "httpStatus param is missed", http.StatusBadRequest)
 	}
 	utils.LogErr(w.Write(jsonResp))
+}
+
+func GetDBStatusResponse(w http.ResponseWriter, r *http.Request, databaseRepository interfaces.DatabaseRepository) {
+
+	context := context.Background()
+	conn, err := databaseRepository.Connect(context)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	databaseRepository.Disconnect(context, conn)
+
+	w.WriteHeader(http.StatusOK)
 }

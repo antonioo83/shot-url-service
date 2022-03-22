@@ -11,7 +11,14 @@ import (
 	"time"
 )
 
-func GetRouters(config config.Config, shotURLRepository interfaces.ShotURLRepository, userRepository interfaces.UserRepository) *chi.Mux {
+type RouteParameters struct {
+	Config             config.Config
+	ShotURLRepository  interfaces.ShotURLRepository
+	UserRepository     interfaces.UserRepository
+	DatabaseRepository interfaces.DatabaseRepository
+}
+
+func GetRouters(p RouteParameters) *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
@@ -27,10 +34,11 @@ func GetRouters(config config.Config, shotURLRepository interfaces.ShotURLReposi
 		})
 	})
 
-	r = getCreateShortURLRoute(r, config, shotURLRepository, userRepository)
-	r = getCreateJSONShortURLRoute(r, config, shotURLRepository, userRepository)
-	r = getOriginalURLRoute(r, shotURLRepository, userRepository)
-	r = getUserUrlsRoute(r, shotURLRepository, userRepository)
+	r = getCreateShortURLRoute(r, p.Config, p.ShotURLRepository, p.UserRepository)
+	r = getCreateJSONShortURLRoute(r, p.Config, p.ShotURLRepository, p.UserRepository)
+	r = getOriginalURLRoute(r, p.ShotURLRepository, p.UserRepository)
+	r = getUserUrlsRoute(r, p.ShotURLRepository, p.UserRepository)
+	r = getDatabaseStatus(r, p.DatabaseRepository)
 
 	return r
 }
@@ -62,6 +70,14 @@ func getOriginalURLRoute(r *chi.Mux, repository interfaces.ShotURLRepository, us
 func getUserUrlsRoute(r *chi.Mux, shotURLRepository interfaces.ShotURLRepository, userRepository interfaces.UserRepository) *chi.Mux {
 	r.Get("/api/user/urls", func(w http.ResponseWriter, r *http.Request) {
 		handlers.GetUserURLsResponse(w, r, shotURLRepository, userRepository)
+	})
+
+	return r
+}
+
+func getDatabaseStatus(r *chi.Mux, databaseRepository interfaces.DatabaseRepository) *chi.Mux {
+	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+		handlers.GetDBStatusResponse(w, r, databaseRepository)
 	})
 
 	return r

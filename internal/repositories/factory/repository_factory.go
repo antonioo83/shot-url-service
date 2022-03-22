@@ -3,6 +3,7 @@ package factory
 import (
 	"github.com/antonioo83/shot-url-service/config"
 	"github.com/antonioo83/shot-url-service/internal/models"
+	"github.com/antonioo83/shot-url-service/internal/repositories/database"
 	"github.com/antonioo83/shot-url-service/internal/repositories/filestore"
 	"github.com/antonioo83/shot-url-service/internal/repositories/interfaces"
 	"github.com/antonioo83/shot-url-service/internal/repositories/localcache"
@@ -28,4 +29,8 @@ func GetUserRepository(config config.Config) interfaces.UserRepository {
 		var userBuffer = make(map[int]models.User)
 		return localcache.NewMemoryUserRepository(userBuffer)
 	}
+}
+
+func GetDatabaseRepository(config config.Config) interfaces.DatabaseRepository {
+	return database.NewDatabaseRepository(config.DatabaseDsn)
 }

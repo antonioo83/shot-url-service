@@ -12,6 +12,7 @@ type Config struct {
 	FileStoragePath     string `env:"FILE_STORAGE_PATH"`
 	UserFileStoragePath string `env:"USER_FILE_STORAGE_PATH"`
 	IsUseFileStore      bool
+	DatabaseDsn         string `env:"DATABASE_DSN"`
 }
 
 var cfg Config
@@ -21,6 +22,7 @@ func GetConfigSettings() Config {
 	const BaseURL string = ""
 	//const FileStoragePath string = "..\\data\\short_url_database.txt"
 	const UserFileStoragePath string = "user_database.txt"
+	const DatabaseDSN = "postgres://postgres:433370@localhost:5433/postgres"
 
 	err := env.Parse(&cfg)
 	if err != nil {
@@ -31,7 +33,7 @@ func GetConfigSettings() Config {
 	flag.StringVar(&cfg.BaseURL, "b", cfg.BaseURL, "Base address of the result short url")
 	flag.StringVar(&cfg.FileStoragePath, "f", cfg.FileStoragePath, "Full filepath to the file storage")
 	flag.StringVar(&cfg.UserFileStoragePath, "fu", cfg.UserFileStoragePath, "Full filepath to the user file storage")
-	flag.Parse()
+	flag.StringVar(&cfg.DatabaseDsn, "d", cfg.DatabaseDsn, "Database port")
 	if cfg.ServerAddress == "" {
 		cfg.ServerAddress = ServerAddress
 	}
@@ -45,6 +47,10 @@ func GetConfigSettings() Config {
 		cfg.IsUseFileStore = false
 	} else {
 		cfg.UserFileStoragePath = UserFileStoragePath
+	}
+
+	if cfg.DatabaseDsn == "" {
+		cfg.DatabaseDsn = DatabaseDSN
 	}
 
 	return cfg

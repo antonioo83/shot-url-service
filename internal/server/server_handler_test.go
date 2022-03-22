@@ -41,9 +41,12 @@ func TestGetRouters(t *testing.T) {
 	}
 
 	config := config.GetConfigSettings()
-	repository := factory.GetRepository(config)
-	userRepository := factory.GetUserRepository(config)
-	r := GetRouters(config, repository, userRepository)
+	r := GetRouters(RouteParameters{
+		Config:             config,
+		ShotURLRepository:  factory.GetRepository(config),
+		UserRepository:     factory.GetUserRepository(config),
+		DatabaseRepository: factory.GetDatabaseRepository(config),
+	})
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 

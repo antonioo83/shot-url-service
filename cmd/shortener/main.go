@@ -10,7 +10,13 @@ import (
 
 func main() {
 	configSettings := config.GetConfigSettings()
-	repository := factory.GetRepository(configSettings)
-	userRepository := factory.GetUserRepository(configSettings)
-	log.Fatal(http.ListenAndServe(configSettings.ServerAddress, server.GetRouters(configSettings, repository, userRepository)))
+	routeParameters :=
+		server.RouteParameters{
+			Config:             configSettings,
+			ShotURLRepository:  factory.GetRepository(configSettings),
+			UserRepository:     factory.GetUserRepository(configSettings),
+			DatabaseRepository: factory.GetDatabaseRepository(configSettings),
+		}
+	handler := server.GetRouters(routeParameters)
+	log.Fatal(http.ListenAndServe(configSettings.ServerAddress, handler))
 }
