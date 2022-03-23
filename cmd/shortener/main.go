@@ -12,16 +12,15 @@ import (
 )
 
 func main() {
-	configSettings := config.GetConfigSettings()
-	databaseRepository := factory.GetDatabaseRepository(configSettings)
-
 	var pool *pgxpool.Pool
 	context := context.Background()
+	configSettings := config.GetConfigSettings()
 	if configSettings.IsUseDatabase {
-		pool, _ = pgxpool.Connect(context, configSettings.DatabaseDsn) //databaseRepository.Connect(context)
+		pool, _ = pgxpool.Connect(context, configSettings.DatabaseDsn)
 		defer pool.Close()
 	}
 
+	databaseRepository := factory.GetDatabaseRepository(configSettings)
 	shortUrlRepository := factory.GetRepository(context, pool, configSettings)
 	userRepository := factory.GetUserRepository(context, pool, configSettings)
 	if configSettings.IsUseDatabase {
