@@ -191,7 +191,6 @@ func GetUserURLsResponse(w http.ResponseWriter, r *http.Request, repository inte
 }
 
 func GetDBStatusResponse(w http.ResponseWriter, r *http.Request, databaseRepository interfaces.DatabaseRepository) {
-
 	context := context.Background()
 	conn, err := databaseRepository.Connect(context)
 	if err != nil {
