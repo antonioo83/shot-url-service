@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/caarlos0/env/v6"
 	"log"
+	"os"
 )
 
 type Config struct {
@@ -13,6 +14,8 @@ type Config struct {
 	UserFileStoragePath string `env:"USER_FILE_STORAGE_PATH"`
 	IsUseFileStore      bool
 	DatabaseDsn         string `env:"DATABASE_DSN"`
+	IsUseDatabase       bool
+	FilepathToDBDump    string
 }
 
 var cfg Config
@@ -50,8 +53,12 @@ func GetConfigSettings() Config {
 		cfg.UserFileStoragePath = UserFileStoragePath
 	}
 
+	cfg.IsUseDatabase = true
 	if cfg.DatabaseDsn == "" {
-		cfg.DatabaseDsn = DatabaseDSN
+		cfg.IsUseDatabase = false
+	} else {
+		cfg.FilepathToDBDump, _ = os.Getwd()
+		cfg.FilepathToDBDump += "\\migrations\\create_tables.sql"
 	}
 
 	return cfg
