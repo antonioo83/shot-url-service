@@ -26,7 +26,7 @@ func main() {
 	if configSettings.IsUseDatabase {
 		err := databaseInit(databaseRepository, pool, configSettings.FilepathToDBDump)
 		if err != nil {
-			log.Fatalln(err)
+			log.Fatalln("can't load tables for the database:" + err.Error())
 		}
 	}
 	routeParameters :=
