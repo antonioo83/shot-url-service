@@ -26,8 +26,6 @@ func GetConfigSettings() Config {
 	//const FileStoragePath string = "..\\data\\short_url_database.txt"
 	const UserFileStoragePath string = "user_database.txt"
 	const DatabaseDSN = "postgres://postgres:433370@localhost:5433/postgres"
-	cfg.FilepathToDBDump, _ = os.Getwd()
-	cfg.FilepathToDBDump += "\\migrations\\create_tables.sql"
 
 	err := env.Parse(&cfg)
 	if err != nil {
@@ -58,6 +56,9 @@ func GetConfigSettings() Config {
 	cfg.IsUseDatabase = true
 	if cfg.DatabaseDsn == "" {
 		cfg.IsUseDatabase = false
+	} else {
+		cfg.FilepathToDBDump, _ = os.Getwd()
+		cfg.FilepathToDBDump += "\\migrations\\create_tables.sql"
 	}
 
 	return cfg
