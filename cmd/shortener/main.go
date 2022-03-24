@@ -18,6 +18,11 @@ func main() {
 	if configSettings.IsUseDatabase {
 		pool, _ = pgxpool.Connect(context, configSettings.DatabaseDsn) //databaseRepository.Connect(context)
 		defer pool.Close()
+		databaseRepository := factory.GetDatabaseRepository(configSettings)
+		err := databaseInit(databaseRepository, pool, configSettings.FilepathToDBDump)
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
 	routeParameters :=
 		server.RouteParameters{
