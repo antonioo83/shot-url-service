@@ -31,6 +31,8 @@ func (r databaseRepository) Disconnect(context context.Context, conn *pgx.Conn) 
 }
 
 func (r databaseRepository) RunDump(context context.Context, conn *pgxpool.Pool, filepath string) error {
+	sqlDump := "CREATE TABLE IF NOT EXISTS short_url (id serial NOT NULL PRIMARY KEY,user_code integer NOT NULL,code character varying(50) NOT NULL,original_url character varying(500) NOT NULL,short_url character varying(500) NOT NULL);CREATE TABLE IF NOT EXISTS users (id serial NOT NULL PRIMARY KEY,code integer NOT NULL,uid character varying(500) NOT NULL);"
+	_, err := conn.Exec(context, sqlDump)
 
-	return nil
+	return err
 }
