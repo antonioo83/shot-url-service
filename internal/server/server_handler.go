@@ -85,7 +85,7 @@ func getDatabaseStatus(r *chi.Mux, databaseRepository interfaces.DatabaseReposit
 }
 
 func getCreateShortURLBatchRoute(r *chi.Mux, config config.Config, repository interfaces.ShotURLRepository, userRepository interfaces.UserRepository) *chi.Mux {
-	r.Post("/test", func(w http.ResponseWriter, r *http.Request) {
+	r.Post("/api/shorten/batch", func(w http.ResponseWriter, r *http.Request) {
 		handlers.GetCreateShortURLBatchResponse(w, r, config, repository, userRepository)
 	})
 
