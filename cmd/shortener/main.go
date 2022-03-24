@@ -12,21 +12,22 @@ import (
 )
 
 func main() {
+	configSettings := config.GetConfigSettings()
+	databaseRepository := factory.GetDatabaseRepository(configSettings)
+
 	var pool *pgxpool.Pool
 	context := context.Background()
-	configSettings := config.GetConfigSettings()
 	if configSettings.IsUseDatabase {
-		pool, _ = pgxpool.Connect(context, configSettings.DatabaseDsn)
+		pool, _ = pgxpool.Connect(context, configSettings.DatabaseDsn) //databaseRepository.Connect(context)
 		defer pool.Close()
 	}
 
-	databaseRepository := factory.GetDatabaseRepository(configSettings)
 	shortUrlRepository := factory.GetRepository(context, pool, configSettings)
 	userRepository := factory.GetUserRepository(context, pool, configSettings)
 	if configSettings.IsUseDatabase {
 		err := databaseInit(databaseRepository, pool, configSettings.FilepathToDBDump)
 		if err != nil {
-			log.Fatalln("can't load tables for the database:" + err.Error())
+			log.Fatalln(err)
 		}
 	}
 	routeParameters :=
