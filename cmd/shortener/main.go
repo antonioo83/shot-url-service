@@ -38,7 +38,7 @@ func main() {
 			DatabaseRepository: databaseRepository,
 		}
 	handler := server.GetRouters(routeParameters)
-	log.Fatal(http.ListenAndServe(":8080", handler))
+	log.Fatal(http.ListenAndServe(configSettings.ServerAddress, handler))
 }
 
 func databaseInit(repository interfaces.DatabaseRepository, connect *pgxpool.Pool, filepathToDBDump string) error {
