@@ -13,29 +13,18 @@ import (
 
 func main() {
 	configSettings := config.GetConfigSettings()
-	databaseRepository := factory.GetDatabaseRepository(configSettings)
-
 	var pool *pgxpool.Pool
 	context := context.Background()
 	if configSettings.IsUseDatabase {
 		pool, _ = pgxpool.Connect(context, configSettings.DatabaseDsn) //databaseRepository.Connect(context)
 		defer pool.Close()
 	}
-
-	shortUrlRepository := factory.GetRepository(context, pool, configSettings)
-	userRepository := factory.GetUserRepository(context, pool, configSettings)
-	if configSettings.IsUseDatabase {
-		err := databaseInit(databaseRepository, pool, configSettings.FilepathToDBDump)
-		if err != nil {
-			log.Fatalln(err)
-		}
-	}
 	routeParameters :=
 		server.RouteParameters{
 			Config:             configSettings,
-			ShotURLRepository:  shortUrlRepository,
-			UserRepository:     userRepository,
-			DatabaseRepository: databaseRepository,
+			ShotURLRepository:  factory.GetRepository(context, pool, configSettings),
+			UserRepository:     factory.GetUserRepository(context, pool, configSettings),
+			DatabaseRepository: factory.GetDatabaseRepository(configSettings),
 		}
 	handler := server.GetRouters(routeParameters)
 	log.Fatal(http.ListenAndServe(configSettings.ServerAddress, handler))
