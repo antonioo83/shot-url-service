@@ -39,6 +39,7 @@ func GetRouters(p RouteParameters) *chi.Mux {
 	r = getOriginalURLRoute(r, p.ShotURLRepository, p.UserRepository)
 	r = getUserUrlsRoute(r, p.ShotURLRepository, p.UserRepository)
 	r = getDatabaseStatus(r, p.DatabaseRepository)
+	r = getCreateShortURLBatchRoute(r, p.Config, p.ShotURLRepository, p.UserRepository)
 
 	return r
 }
@@ -78,6 +79,14 @@ func getUserUrlsRoute(r *chi.Mux, shotURLRepository interfaces.ShotURLRepository
 func getDatabaseStatus(r *chi.Mux, databaseRepository interfaces.DatabaseRepository) *chi.Mux {
 	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		handlers.GetDBStatusResponse(w, r, databaseRepository)
+	})
+
+	return r
+}
+
+func getCreateShortURLBatchRoute(r *chi.Mux, config config.Config, repository interfaces.ShotURLRepository, userRepository interfaces.UserRepository) *chi.Mux {
+	r.Post("/test", func(w http.ResponseWriter, r *http.Request) {
+		handlers.GetCreateShortURLBatchResponse(w, r, config, repository, userRepository)
 	})
 
 	return r

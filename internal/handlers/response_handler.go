@@ -14,23 +14,25 @@ import (
 )
 
 func GetCreateJSONShortURLResponse(w http.ResponseWriter, r *http.Request, config config.Config, repository interfaces.ShotURLRepository, userRepository interfaces.UserRepository) {
-	originalURL, err := GetOriginalURLFromBody(r)
+	createShortURL, err := GetOriginalURLFromBody(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	var createShortURLs []CreateShortURL
+	createShortURLs = append(createShortURLs, *createShortURL)
 	getSavedShortURLResponse(savedShortURLParameters{
 		w,
 		r,
 		config,
 		repository,
 		userRepository,
-		originalURL,
-		func(w http.ResponseWriter, shotURL string) {
+		&createShortURLs,
+		func(w http.ResponseWriter, shotURLResponses []shortUrlResponse) {
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
-			jsonResponse, err := getJSONResponse("result", shotURL)
+			jsonResponse, err := getJSONResponse("result", shotURLResponses[0].ShortUrl)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -38,6 +40,11 @@ func GetCreateJSONShortURLResponse(w http.ResponseWriter, r *http.Request, confi
 			utils.LogErr(w.Write(jsonResponse))
 		},
 	})
+}
+
+type shortUrlResponse struct {
+	CorrelationId string `json:"correlation_id"`
+	ShortUrl      string `json:"original_url"`
 }
 
 func getJSONResponse(key string, value string) ([]byte, error) {
@@ -52,7 +59,32 @@ func getJSONResponse(key string, value string) ([]byte, error) {
 }
 
 func GetCreateShortURLResponse(w http.ResponseWriter, r *http.Request, config config.Config, repository interfaces.ShotURLRepository, userRepository interfaces.UserRepository) {
-	originalURL, err := GetBody(r)
+	createShortURL, err := GetBody(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var createShortURLs []CreateShortURL
+	createShortURLs = append(createShortURLs, *createShortURL)
+	getSavedShortURLResponse(savedShortURLParameters{
+		w,
+		r,
+		config,
+		repository,
+		userRepository,
+		&createShortURLs,
+		func(w http.ResponseWriter, shotURLResponses []shortUrlResponse) {
+			w.WriteHeader(http.StatusCreated)
+			for _, shotURLResponse := range shotURLResponses {
+				utils.LogErr(w.Write([]byte(shotURLResponse.ShortUrl)))
+			}
+		},
+	})
+}
+
+func GetCreateShortURLBatchResponse(w http.ResponseWriter, r *http.Request, config config.Config, repository interfaces.ShotURLRepository, userRepository interfaces.UserRepository) {
+	createShortURLs, err := GetBatchRequestsFromBody(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -64,63 +96,84 @@ func GetCreateShortURLResponse(w http.ResponseWriter, r *http.Request, config co
 		config,
 		repository,
 		userRepository,
-		originalURL,
-		func(w http.ResponseWriter, shotURL string) {
+		createShortURLs,
+		func(w http.ResponseWriter, shotURLResponses []shortUrlResponse) {
+			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
-			utils.LogErr(w.Write([]byte(shotURL)))
+			jsonResponse, err := getJSONArrayResponse(shotURLResponses)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			utils.LogErr(w.Write(jsonResponse))
 		},
 	})
 }
 
+func getJSONArrayResponse(shotURLResponses []shortUrlResponse) ([]byte, error) {
+	jsonResp, err := json.Marshal(shotURLResponses)
+	if err != nil {
+		return jsonResp, errors.New("error happened in JSON marshal")
+	}
+
+	return jsonResp, nil
+}
+
 type savedShortURLParameters struct {
-	rWriter        http.ResponseWriter
-	request        *http.Request
-	config         config.Config
-	repository     interfaces.ShotURLRepository
-	userRepository interfaces.UserRepository
-	originalURL    string
-	responseFunc   func(w http.ResponseWriter, shotURL string)
+	rWriter         http.ResponseWriter
+	request         *http.Request
+	config          config.Config
+	repository      interfaces.ShotURLRepository
+	userRepository  interfaces.UserRepository
+	createShortURLs *[]CreateShortURL
+	responseFunc    func(w http.ResponseWriter, shotURLResponses []shortUrlResponse)
 }
 
 func getSavedShortURLResponse(p savedShortURLParameters) {
-	shotURL, code, err := GetShortURL(p.originalURL, p.request, p.config.BaseURL)
-	if err != nil {
-		http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	isInDB, err := p.repository.IsInDatabase(code)
-	if err != nil {
-		http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if isInDB {
-		p.responseFunc(p.rWriter, shotURL)
-		return
-	}
-
-	user := getAuthUser(p.rWriter, p.request, p.userRepository)
-	if isInUser, _ := p.userRepository.IsInDatabase(user.CODE); !isInUser {
-		err = p.userRepository.Save(user)
+	var shortUrlResponses []shortUrlResponse
+	for _, createShortURL := range *p.createShortURLs {
+		shotURL, code, err := GetShortURL(createShortURL.OriginalURL, p.request, p.config.BaseURL)
 		if err != nil {
 			http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		isInDB, err := p.repository.IsInDatabase(code)
+		if err != nil {
+			http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if isInDB {
+			shortUrlResponses = append(shortUrlResponses, shortUrlResponse{createShortURL.CorrelationId, shotURL})
+			p.responseFunc(p.rWriter, shortUrlResponses)
+			return
+		}
+
+		user := getAuthUser(p.rWriter, p.request, p.userRepository)
+		if isInUser, _ := p.userRepository.IsInDatabase(user.CODE); !isInUser {
+			err = p.userRepository.Save(user)
+			if err != nil {
+				http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
+		var shortURL models.ShortURL
+		shortURL.Code = code
+		shortURL.UserCode = user.CODE
+		shortURL.CorrelationId = createShortURL.CorrelationId
+		shortURL.OriginalURL = createShortURL.OriginalURL
+		shortURL.ShortURL = shotURL
+		err = p.repository.SaveURL(shortURL)
+		if err != nil {
+			http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		shortUrlResponses = append(shortUrlResponses, shortUrlResponse{shortURL.CorrelationId, shortURL.ShortURL})
 	}
 
-	var shortURL models.ShortURL
-	shortURL.Code = code
-	shortURL.UserCode = user.CODE
-	shortURL.OriginalURL = p.originalURL
-	shortURL.ShortURL = shotURL
-	err = p.repository.SaveURL(shortURL)
-	if err != nil {
-		http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	p.responseFunc(p.rWriter, shotURL)
+	p.responseFunc(p.rWriter, shortUrlResponses)
 }
 
 func getAuthUser(rWriter http.ResponseWriter, request *http.Request, userRepository interfaces.UserRepository) models.User {

@@ -30,6 +30,23 @@ func (r fileRepository) SaveURL(model models.ShortURL) error {
 	return nil
 }
 
+func (r *fileRepository) SaveModels(models map[int]models.ShortURL) error {
+	producer, err := GetProducer(r.filename)
+	if err != nil {
+		return err
+	}
+	defer utils.ResourceClose(producer.file)
+
+	for _, model := range models {
+		err = producer.encoder.Encode(&model)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (r fileRepository) FindByCode(code string) (*models.ShortURL, error) {
 	model := models.ShortURL{}
 	consumer, err := GetConsumer(r.filename)

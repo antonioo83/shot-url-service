@@ -8,27 +8,40 @@ import (
 	"net/http"
 )
 
-func GetBody(r *http.Request) (string, error) {
+func GetBody(r *http.Request) (*CreateShortURL, error) {
 	b, err := uncompress(r)
-	//defer utils.ResourceClose(r.Body)
-	//b, err = io.ReadAll(r.Body)
-
-	return string(b), err
+	return &CreateShortURL{string(b), ""}, err
 }
 
 type shortURLRequest struct {
 	URL string
 }
 
-func GetOriginalURLFromBody(r *http.Request) (string, error) {
+type CreateShortURL struct {
+	OriginalURL   string `json:"original_url"`
+	CorrelationId string `json:"correlation_id"`
+}
+
+func GetOriginalURLFromBody(r *http.Request) (*CreateShortURL, error) {
 	var request shortURLRequest
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&request)
 	if err != nil {
-		return "", fmt.Errorf("i can't decode json request: %w", err)
+		return nil, fmt.Errorf("i can't decode json request: %w", err)
 	}
 
-	return request.URL, nil
+	return &CreateShortURL{request.URL, ""}, nil
+}
+
+func GetBatchRequestsFromBody(r *http.Request) (*[]CreateShortURL, error) {
+	var requests []CreateShortURL
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&requests)
+	if err != nil {
+		return nil, fmt.Errorf("i can't decode json request: %w", err)
+	}
+
+	return &requests, nil
 }
 
 func uncompress(r *http.Request) ([]byte, error) {

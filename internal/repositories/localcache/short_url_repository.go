@@ -20,6 +20,14 @@ func (m *memoryRepository) SaveURL(model models.ShortURL) error {
 	return nil
 }
 
+func (m *memoryRepository) SaveModels(models map[int]models.ShortURL) error {
+	for _, model := range models {
+		m.buffer[model.Code] = model
+	}
+
+	return nil
+}
+
 func (m *memoryRepository) FindByCode(code string) (*models.ShortURL, error) {
 	model, ok := m.buffer[code]
 	if !ok {
