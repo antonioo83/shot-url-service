@@ -20,7 +20,7 @@ func NewShortUrlRepository(context context.Context, pool *pgxpool.Pool) interfac
 func (s shortUrlRepository) SaveURL(model models.ShortURL) error {
 	_, err := s.connection.Query(
 		s.context,
-		"INSERT INTO short_url(correlation_id, user_code, code, original_url, short_url)VALUES ($1, $2, $3, $4, $5)",
+		"INSERT INTO short_url(correlation_id, user_code, code, original_url, short_url)VALUES ($1, $2, $3, $4, $5) ON CONFLICT (short_url) DO NOTHING;",
 		model.CorrelationId, model.UserCode, model.Code, model.OriginalURL, model.ShortURL,
 	)
 	return err
