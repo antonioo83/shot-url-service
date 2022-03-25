@@ -131,6 +131,15 @@ type savedShortURLParameters struct {
 
 func getSavedShortURLResponse(p savedShortURLParameters) {
 	var shortUrlResponses []shortUrlResponse
+	user := getAuthUser(p.rWriter, p.request, p.userRepository)
+	if isInUser, _ := p.userRepository.IsInDatabase(user.CODE); !isInUser {
+		err2 := p.userRepository.Save(user)
+		if err2 != nil {
+			http.Error(p.rWriter, err2.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
 	for _, createShortURL := range *p.createShortURLs {
 		shotURL, code, err := GetShortURL(createShortURL.OriginalURL, p.request, p.config.BaseURL)
 		if err != nil {
@@ -148,15 +157,6 @@ func getSavedShortURLResponse(p savedShortURLParameters) {
 			shortUrlResponses = append(shortUrlResponses, shortUrlResponse{createShortURL.CorrelationId, shotURL})
 			p.responseFunc(p.rWriter, shortUrlResponses)
 			return
-		}
-
-		user := getAuthUser(p.rWriter, p.request, p.userRepository)
-		if isInUser, _ := p.userRepository.IsInDatabase(user.CODE); !isInUser {
-			err = p.userRepository.Save(user)
-			if err != nil {
-				http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
-				return
-			}
 		}
 
 		var shortURL models.ShortURL
