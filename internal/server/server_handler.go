@@ -27,12 +27,6 @@ func GetRouters(p RouteParameters) *chi.Mux {
 	r.Use(middleware.Timeout(60 * time.Second))
 	compressor := middleware.NewCompressor(flate.DefaultCompression)
 	r.Use(compressor.Handler)
-	r.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-			next.ServeHTTP(w, r)
-		})
-	})
 
 	r = getCreateShortURLRoute(r, p.Config, p.ShotURLRepository, p.UserRepository)
 	r = getCreateJSONShortURLRoute(r, p.Config, p.ShotURLRepository, p.UserRepository)
