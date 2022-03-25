@@ -46,7 +46,7 @@ func GetCreateJSONShortURLResponse(w http.ResponseWriter, r *http.Request, confi
 
 type shortUrlResponse struct {
 	CorrelationId string `json:"correlation_id"`
-	ShortUrl      string `json:"original_url"`
+	ShortUrl      string `json:"short_url"`
 }
 
 func getJSONResponse(key string, value string) ([]byte, error) {
