@@ -25,7 +25,7 @@ func GetConfigSettings() Config {
 	const BaseURL string = ""
 	//const FileStoragePath string = "..\\data\\short_url_database.txt"
 	const UserFileStoragePath string = "user_database.txt"
-	const DatabaseDSN = "postgres://postgres:433370@localhost:5433/postgres"
+	//const DatabaseDSN = "postgres://postgres:433370@localhost:5433/postgres"
 
 	err := env.Parse(&cfg)
 	if err != nil {

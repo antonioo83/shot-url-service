@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
+	"github.com/antonioo83/shot-url-service/config"
 	"github.com/antonioo83/shot-url-service/internal/repositories/interfaces"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -21,13 +22,23 @@ func (r databaseRepository) Connect(context context.Context) (*pgx.Conn, error) 
 	if err != nil {
 		return nil, fmt.Errorf("unable to connect to database: %w", err)
 	}
-	//defer conn.Close(context)
 
 	return conn, nil
 }
 
 func (r databaseRepository) Disconnect(context context.Context, conn *pgx.Conn) {
 	defer conn.Close(context)
+}
+
+func GetConnectToInitializedDB(context context.Context, configSettings config.Config,
+	databaseRepository interfaces.DatabaseRepository) (*pgxpool.Pool, error) {
+	pool, _ := pgxpool.Connect(context, configSettings.DatabaseDsn)
+	err := databaseRepository.RunDump(context, pool, configSettings.FilepathToDBDump)
+	if err != nil {
+		return nil, err
+	}
+
+	return pool, err
 }
 
 func (r databaseRepository) RunDump(context context.Context, conn *pgxpool.Pool, filepath string) error {
