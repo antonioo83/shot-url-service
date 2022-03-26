@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"github.com/antonioo83/shot-url-service/config"
-	"github.com/antonioo83/shot-url-service/internal/repositories/database"
 	"github.com/antonioo83/shot-url-service/internal/repositories/factory"
+	"github.com/antonioo83/shot-url-service/internal/repositories/interfaces"
 	"github.com/antonioo83/shot-url-service/internal/server"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
@@ -17,7 +17,7 @@ func main() {
 	configSettings := config.GetConfigSettings()
 	databaseRepository := factory.GetDatabaseRepository(configSettings)
 	if configSettings.IsUseDatabase {
-		pool, err := database.GetConnectToInitializedDB(context, configSettings, databaseRepository)
+		pool, err := getConnectToInitializedDB(context, configSettings, databaseRepository)
 		if err != nil {
 			log.Fatalf("can't connect and initialize databse %v\n", err)
 		}
@@ -33,4 +33,14 @@ func main() {
 		}
 	handler := server.GetRouters(routeParameters)
 	log.Fatal(http.ListenAndServe(configSettings.ServerAddress, handler))
+}
+
+func getConnectToInitializedDB(context context.Context, configSettings config.Config, databaseRepository interfaces.DatabaseRepository) (*pgxpool.Pool, error) {
+	pool, _ := pgxpool.Connect(context, configSettings.DatabaseDsn)
+	err := databaseRepository.RunDump(context, pool, configSettings.FilepathToDBDump)
+	if err != nil {
+		return nil, err
+	}
+
+	return pool, err
 }
