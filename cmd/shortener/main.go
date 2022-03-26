@@ -12,18 +12,18 @@ import (
 )
 
 func main() {
+	configSettings := config.GetConfigSettings()
 	var pool *pgxpool.Pool
 	context := context.Background()
-	configSettings := config.GetConfigSettings()
 	databaseRepository := factory.GetDatabaseRepository(configSettings)
 	if configSettings.IsUseDatabase {
-		pool, err := getConnectToInitializedDB(context, configSettings, databaseRepository)
-		if err != nil {
-			log.Fatalf("can't connect and initialize databse %v\n", err)
-		}
+		pool, _ = pgxpool.Connect(context, configSettings.DatabaseDsn)
 		defer pool.Close()
+		err := databaseInit(databaseRepository, pool, configSettings.FilepathToDBDump)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
-
 	routeParameters :=
 		server.RouteParameters{
 			Config:             configSettings,
@@ -35,12 +35,6 @@ func main() {
 	log.Fatal(http.ListenAndServe(configSettings.ServerAddress, handler))
 }
 
-func getConnectToInitializedDB(context context.Context, configSettings config.Config, databaseRepository interfaces.DatabaseRepository) (*pgxpool.Pool, error) {
-	pool, _ := pgxpool.Connect(context, configSettings.DatabaseDsn)
-	err := databaseRepository.RunDump(context, pool, configSettings.FilepathToDBDump)
-	if err != nil {
-		return nil, err
-	}
-
-	return pool, err
+func databaseInit(repository interfaces.DatabaseRepository, connect *pgxpool.Pool, filepathToDBDump string) error {
+	return repository.RunDump(context.Background(), connect, filepathToDBDump)
 }
