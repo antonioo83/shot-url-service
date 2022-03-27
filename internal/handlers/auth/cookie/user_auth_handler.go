@@ -48,11 +48,8 @@ func GenerateToken(code int) (string, error) {
 func ValidateToken(token string) bool {
 	user := getExtractedData(token)
 	_, ok := user["user_code"]
-	if !ok {
-		return false
-	}
 
-	return true
+	return ok
 }
 
 func getExtractedData(token string) map[string]interface{} {

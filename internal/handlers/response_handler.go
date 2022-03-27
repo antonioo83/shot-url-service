@@ -31,10 +31,10 @@ func GetCreateJSONShortURLResponse(w http.ResponseWriter, r *http.Request, confi
 		repository,
 		userRepository,
 		&createShortURLs,
-		func(w http.ResponseWriter, shotURLResponses []shortUrlResponse, httpStatus int) {
+		func(w http.ResponseWriter, shotURLResponses []shortURLResponse, httpStatus int) {
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(httpStatus)
-			jsonResponse, err := getJSONResponse("result", shotURLResponses[0].ShortUrl)
+			jsonResponse, err := getJSONResponse("result", shotURLResponses[0].ShortURL)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -44,9 +44,9 @@ func GetCreateJSONShortURLResponse(w http.ResponseWriter, r *http.Request, confi
 	})
 }
 
-type shortUrlResponse struct {
-	CorrelationId string `json:"correlation_id"`
-	ShortUrl      string `json:"short_url"`
+type shortURLResponse struct {
+	CorrelationID string `json:"correlation_id"`
+	ShortURL      string `json:"short_url"`
 }
 
 func getJSONResponse(key string, value string) ([]byte, error) {
@@ -76,10 +76,10 @@ func GetCreateShortURLResponse(w http.ResponseWriter, r *http.Request, config co
 		repository,
 		userRepository,
 		&createShortURLs,
-		func(w http.ResponseWriter, shotURLResponses []shortUrlResponse, httpStatus int) {
+		func(w http.ResponseWriter, shotURLResponses []shortURLResponse, httpStatus int) {
 			w.WriteHeader(httpStatus)
 			for _, shotURLResponse := range shotURLResponses {
-				utils.LogErr(w.Write([]byte(shotURLResponse.ShortUrl)))
+				utils.LogErr(w.Write([]byte(shotURLResponse.ShortURL)))
 			}
 		},
 	})
@@ -99,7 +99,7 @@ func GetCreateShortURLBatchResponse(w http.ResponseWriter, r *http.Request, conf
 		repository,
 		userRepository,
 		createShortURLs,
-		func(w http.ResponseWriter, shotURLResponses []shortUrlResponse, httpStatus int) {
+		func(w http.ResponseWriter, shotURLResponses []shortURLResponse, httpStatus int) {
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(httpStatus)
 			jsonResponse, err := getJSONArrayResponse(shotURLResponses)
@@ -112,7 +112,7 @@ func GetCreateShortURLBatchResponse(w http.ResponseWriter, r *http.Request, conf
 	})
 }
 
-func getJSONArrayResponse(shotURLResponses []shortUrlResponse) ([]byte, error) {
+func getJSONArrayResponse(shotURLResponses []shortURLResponse) ([]byte, error) {
 	jsonResp, err := json.Marshal(shotURLResponses)
 	if err != nil {
 		return jsonResp, errors.New("error happened in JSON marshal")
@@ -128,11 +128,11 @@ type savedShortURLParameters struct {
 	repository      interfaces.ShotURLRepository
 	userRepository  interfaces.UserRepository
 	createShortURLs *[]CreateShortURL
-	responseFunc    func(w http.ResponseWriter, shotURLResponses []shortUrlResponse, httpStatus int)
+	responseFunc    func(w http.ResponseWriter, shotURLResponses []shortURLResponse, httpStatus int)
 }
 
 func getSavedShortURLResponse(p savedShortURLParameters) {
-	var shortUrlResponses []shortUrlResponse
+	var shortURLResponses []shortURLResponse
 	user := getAuthUser(p.rWriter, p.request, p.userRepository)
 	if isInUser, _ := p.userRepository.IsInDatabase(user.CODE); !isInUser {
 		err2 := p.userRepository.Save(user)
@@ -149,7 +149,7 @@ func getSavedShortURLResponse(p savedShortURLParameters) {
 			return
 		}
 
-		if p.config.IsUseDatabase == false {
+		if !p.config.IsUseDatabase {
 			isInDB, err := p.repository.IsInDatabase(code)
 			if err != nil {
 				http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
@@ -157,8 +157,8 @@ func getSavedShortURLResponse(p savedShortURLParameters) {
 			}
 
 			if isInDB {
-				shortUrlResponses = append(shortUrlResponses, shortUrlResponse{createShortURL.CorrelationId, shotURL})
-				p.responseFunc(p.rWriter, shortUrlResponses, http.StatusCreated)
+				shortURLResponses = append(shortURLResponses, shortURLResponse{createShortURL.CorrelationID, shotURL})
+				p.responseFunc(p.rWriter, shortURLResponses, http.StatusCreated)
 				return
 			}
 		}
@@ -166,7 +166,7 @@ func getSavedShortURLResponse(p savedShortURLParameters) {
 		var shortURL models.ShortURL
 		shortURL.Code = code
 		shortURL.UserCode = user.CODE
-		shortURL.CorrelationId = createShortURL.CorrelationId
+		shortURL.CorrelationID = createShortURL.CorrelationID
 		shortURL.OriginalURL = createShortURL.OriginalURL
 		shortURL.ShortURL = shotURL
 		err = p.repository.SaveURL(shortURL)
@@ -174,24 +174,24 @@ func getSavedShortURLResponse(p savedShortURLParameters) {
 			var pgErr *pgconn.PgError
 			errors.As(err, &pgErr)
 			if pgErr.Code == pgerrcode.UniqueViolation {
-				shortUrlResponses = append(shortUrlResponses, shortUrlResponse{createShortURL.CorrelationId, shotURL})
-				p.responseFunc(p.rWriter, shortUrlResponses, http.StatusConflict)
+				shortURLResponses = append(shortURLResponses, shortURLResponse{createShortURL.CorrelationID, shotURL})
+				p.responseFunc(p.rWriter, shortURLResponses, http.StatusConflict)
 				return
 			} else {
 				http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
 				return
 			}
 		}
-		shortUrlResponses = append(shortUrlResponses, shortUrlResponse{shortURL.CorrelationId, shortURL.ShortURL})
+		shortURLResponses = append(shortURLResponses, shortURLResponse{shortURL.CorrelationID, shortURL.ShortURL})
 	}
 
-	p.responseFunc(p.rWriter, shortUrlResponses, http.StatusCreated)
+	p.responseFunc(p.rWriter, shortURLResponses, http.StatusCreated)
 }
 
 func getAuthUser(rWriter http.ResponseWriter, request *http.Request, userRepository interfaces.UserRepository) models.User {
 	var user models.User
 	token := cookie.GetToken(request)
-	if token == "" || cookie.ValidateToken(token) == false {
+	if token == "" || !cookie.ValidateToken(token) {
 		lastModel, _ := userRepository.GetLastModel()
 		if lastModel.CODE == 0 {
 			user.CODE = 1
@@ -238,7 +238,7 @@ func GetUserURLsResponse(w http.ResponseWriter, r *http.Request, repository inte
 		return
 	}
 
-	parseData := make([]map[string]interface{}, 0, 0)
+	parseData := make([]map[string]interface{}, 0)
 	for _, model := range *models {
 		var singleMap = make(map[string]interface{})
 		singleMap["short_url"] = model.ShortURL

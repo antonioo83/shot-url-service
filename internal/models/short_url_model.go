@@ -3,7 +3,7 @@ package models
 type ShortURL struct {
 	ID            string
 	UserCode      int
-	CorrelationId string
+	CorrelationID string
 	Code          string
 	OriginalURL   string
 	ShortURL      string

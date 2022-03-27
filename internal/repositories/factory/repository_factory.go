@@ -13,7 +13,7 @@ import (
 
 func GetRepository(context context.Context, pool *pgxpool.Pool, config config.Config) interfaces.ShotURLRepository {
 	if config.IsUseDatabase {
-		return database.NewShortUrlRepository(context, pool)
+		return database.NewShortURLRepository(context, pool)
 	} else if config.IsUseFileStore {
 		return filestore.NewFileRepository(config.FileStoragePath)
 	} else {

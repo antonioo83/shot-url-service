@@ -19,7 +19,7 @@ type shortURLRequest struct {
 
 type CreateShortURL struct {
 	OriginalURL   string `json:"original_url"`
-	CorrelationId string `json:"correlation_id"`
+	CorrelationID string `json:"correlation_id"`
 }
 
 func GetOriginalURLFromBody(r *http.Request) (*CreateShortURL, error) {
