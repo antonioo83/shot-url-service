@@ -64,9 +64,15 @@ func (s shortURLRepository) FindByCode(code string) (*models.ShortURL, error) {
 func (s shortURLRepository) FindAllByUserCode(userCode int) (*map[string]models.ShortURL, error) {
 	var model = models.ShortURL{}
 	models := make(map[string]models.ShortURL)
-	rows, _ := s.connection.Query(s.context, "SELECT correlation_id, user_code, code, original_url, short_url FROM short_url WHERE user_code=$1", userCode)
+	rows, err := s.connection.Query(s.context, "SELECT correlation_id, user_code, code, original_url, short_url FROM short_url WHERE user_code=$1", userCode)
+	if err != nil {
+		return nil, err
+	}
 	for rows.Next() {
-		rows.Scan(&model.CorrelationID, &model.UserCode, &model.Code, &model.OriginalURL, &model.ShortURL)
+		err = rows.Scan(&model.CorrelationID, &model.UserCode, &model.Code, &model.OriginalURL, &model.ShortURL)
+		if err != nil {
+			return nil, err
+		}
 		models[model.Code] = model
 	}
 

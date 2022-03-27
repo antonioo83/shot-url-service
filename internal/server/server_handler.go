@@ -30,7 +30,7 @@ func GetRouters(p RouteParameters) *chi.Mux {
 
 	r = getCreateShortURLRoute(r, p.Config, p.ShotURLRepository, p.UserRepository)
 	r = getCreateJSONShortURLRoute(r, p.Config, p.ShotURLRepository, p.UserRepository)
-	r = getOriginalURLRoute(r, p.ShotURLRepository, p.UserRepository)
+	r = getOriginalURLRoute(r, p.ShotURLRepository)
 	r = getUserUrlsRoute(r, p.ShotURLRepository, p.UserRepository)
 	r = getDatabaseStatus(r, p.DatabaseRepository)
 	r = getCreateShortURLBatchRoute(r, p.Config, p.ShotURLRepository, p.UserRepository)
@@ -54,7 +54,7 @@ func getCreateJSONShortURLRoute(r *chi.Mux, config config.Config, repository int
 	return r
 }
 
-func getOriginalURLRoute(r *chi.Mux, repository interfaces.ShotURLRepository, userRepository interfaces.UserRepository) *chi.Mux {
+func getOriginalURLRoute(r *chi.Mux, repository interfaces.ShotURLRepository) *chi.Mux {
 	r.Get("/{code}", func(w http.ResponseWriter, r *http.Request) {
 		handlers.GetOriginalURLResponse(w, r, repository)
 	})
