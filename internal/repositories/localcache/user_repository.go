@@ -15,7 +15,7 @@ func NewMemoryUserRepository(m map[int]models.User) interfaces.UserRepository {
 }
 
 func (m *memoryUserRepository) Save(model models.User) error {
-	m.buffer[model.CODE] = model
+	m.buffer[model.Code] = model
 
 	return nil
 }

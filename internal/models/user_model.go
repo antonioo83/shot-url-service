@@ -2,6 +2,6 @@ package models
 
 type User struct {
 	ID   int
-	CODE int
+	Code int
 	UID  string
 }

@@ -18,13 +18,13 @@ func NewUserRepository(context context.Context, pool *pgxpool.Pool) interfaces.U
 }
 
 func (u userRepository) Save(model models.User) error {
-	_, err := u.connection.Query(u.context, "INSERT INTO users(code, uid)VALUES ($1, $2)", &model.CODE, &model.UID)
+	_, err := u.connection.Query(u.context, "INSERT INTO users(code, uid)VALUES ($1, $2)", &model.Code, &model.UID)
 	return err
 }
 
 func (u userRepository) FindByCode(code int) (*models.User, error) {
 	var model models.User
-	err := u.connection.QueryRow(u.context, "SELECT code, uid FROM users WHERE code=$1", code).Scan(&model.CODE, &model.UID)
+	err := u.connection.QueryRow(u.context, "SELECT code, uid FROM users WHERE code=$1", code).Scan(&model.Code, &model.UID)
 	if err == pgx.ErrNoRows {
 
 		return nil, err
@@ -43,7 +43,7 @@ func (u userRepository) IsInDatabase(code int) (bool, error) {
 
 func (u userRepository) GetLastModel() (*models.User, error) {
 	model := models.User{}
-	err := u.connection.QueryRow(u.context, "SELECT code, uid FROM users ORDER BY code DESC").Scan(&model.CODE, &model.UID)
+	err := u.connection.QueryRow(u.context, "SELECT code, uid FROM users ORDER BY code DESC").Scan(&model.Code, &model.UID)
 	if err == pgx.ErrNoRows {
 
 		return &model, err

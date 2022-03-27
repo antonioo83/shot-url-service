@@ -15,6 +15,11 @@ import (
 	"net/http"
 )
 
+type shortURLResponse struct {
+	CorrelationID string `json:"correlation_id"`
+	ShortURL      string `json:"short_url"`
+}
+
 func GetCreateJSONShortURLResponse(w http.ResponseWriter, r *http.Request, config config.Config, repository interfaces.ShotURLRepository, userRepository interfaces.UserRepository) {
 	createShortURL, err := GetOriginalURLFromBody(r)
 	if err != nil {
@@ -42,11 +47,6 @@ func GetCreateJSONShortURLResponse(w http.ResponseWriter, r *http.Request, confi
 			utils.LogErr(w.Write(jsonResponse))
 		},
 	})
-}
-
-type shortURLResponse struct {
-	CorrelationID string `json:"correlation_id"`
-	ShortURL      string `json:"short_url"`
 }
 
 func getJSONResponse(key string, value string) ([]byte, error) {
@@ -78,9 +78,7 @@ func GetCreateShortURLResponse(w http.ResponseWriter, r *http.Request, config co
 		&createShortURLs,
 		func(w http.ResponseWriter, shotURLResponses []shortURLResponse, httpStatus int) {
 			w.WriteHeader(httpStatus)
-			for _, shotURLResponse := range shotURLResponses {
-				utils.LogErr(w.Write([]byte(shotURLResponse.ShortURL)))
-			}
+			utils.LogErr(w.Write([]byte(shotURLResponses[0].ShortURL)))
 		},
 	})
 }
@@ -134,14 +132,6 @@ type savedShortURLParameters struct {
 func getSavedShortURLResponse(p savedShortURLParameters) {
 	var shortURLResponses []shortURLResponse
 	user := getAuthUser(p.rWriter, p.request, p.userRepository)
-	if isInUser, _ := p.userRepository.IsInDatabase(user.CODE); !isInUser {
-		err2 := p.userRepository.Save(user)
-		if err2 != nil {
-			http.Error(p.rWriter, err2.Error(), http.StatusInternalServerError)
-			return
-		}
-	}
-
 	for _, createShortURL := range *p.createShortURLs {
 		shotURL, code, err := GetShortURL(createShortURL.OriginalURL, p.request, p.config.BaseURL)
 		if err != nil {
@@ -163,9 +153,17 @@ func getSavedShortURLResponse(p savedShortURLParameters) {
 			}
 		}
 
+		if isInUser, _ := p.userRepository.IsInDatabase(user.Code); !isInUser {
+			err = p.userRepository.Save(user)
+			if err != nil {
+				http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
 		var shortURL models.ShortURL
 		shortURL.Code = code
-		shortURL.UserCode = user.CODE
+		shortURL.UserCode = user.Code
 		shortURL.CorrelationID = createShortURL.CorrelationID
 		shortURL.OriginalURL = createShortURL.OriginalURL
 		shortURL.ShortURL = shotURL
@@ -193,17 +191,17 @@ func getAuthUser(rWriter http.ResponseWriter, request *http.Request, userReposit
 	token := cookie.GetToken(request)
 	if token == "" || !cookie.ValidateToken(token) {
 		lastModel, _ := userRepository.GetLastModel()
-		if lastModel.CODE == 0 {
-			user.CODE = 1
-			user.UID, _ = cookie.GenerateToken(user.CODE)
+		if lastModel.Code == 0 {
+			user.Code = 1
+			user.UID, _ = cookie.GenerateToken(user.Code)
 		} else {
 			user = *lastModel
-			user.CODE = user.CODE + 1
-			user.UID, _ = cookie.GenerateToken(user.CODE)
+			user.Code = user.Code + 1
+			user.UID, _ = cookie.GenerateToken(user.Code)
 		}
 		cookie.SetToken(rWriter, user)
 	} else {
-		user.CODE = cookie.GetUserCode(token)
+		user.Code = cookie.GetUserCode(token)
 		user.UID = token
 	}
 
@@ -232,7 +230,7 @@ func GetOriginalURLResponse(w http.ResponseWriter, r *http.Request, repository i
 
 func GetUserURLsResponse(w http.ResponseWriter, r *http.Request, repository interfaces.ShotURLRepository, userRepository interfaces.UserRepository) {
 	user := getAuthUser(w, r, userRepository)
-	models, _ := repository.FindAllByUserCode(user.CODE)
+	models, _ := repository.FindAllByUserCode(user.Code)
 	if len(*models) == 0 {
 		w.WriteHeader(http.StatusNoContent)
 		return
@@ -255,7 +253,7 @@ func GetUserURLsResponse(w http.ResponseWriter, r *http.Request, repository inte
 	utils.LogErr(w.Write(jsonResp))
 }
 
-func GetDBStatusResponse(w http.ResponseWriter, r *http.Request, databaseRepository interfaces.DatabaseRepository) {
+func GetDBStatusResponse(w http.ResponseWriter, databaseRepository interfaces.DatabaseRepository) {
 	context := context.Background()
 	conn, err := databaseRepository.Connect(context)
 	if err != nil {

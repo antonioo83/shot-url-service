@@ -45,7 +45,7 @@ func (r userRepository) FindByCode(code int) (*models.User, error) {
 			if err != nil {
 				return nil, fmt.Errorf("i can't decode json request: %s", err.Error())
 			}
-			if model.CODE == code {
+			if model.Code == code {
 				return &model, nil
 			}
 		}

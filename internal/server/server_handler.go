@@ -72,7 +72,7 @@ func getUserUrlsRoute(r *chi.Mux, shotURLRepository interfaces.ShotURLRepository
 
 func getDatabaseStatus(r *chi.Mux, databaseRepository interfaces.DatabaseRepository) *chi.Mux {
 	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		handlers.GetDBStatusResponse(w, r, databaseRepository)
+		handlers.GetDBStatusResponse(w, databaseRepository)
 	})
 
 	return r
