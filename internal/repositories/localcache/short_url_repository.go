@@ -20,6 +20,14 @@ func (m *memoryRepository) SaveURL(model models.ShortURL) error {
 	return nil
 }
 
+func (m *memoryRepository) SaveModels(models map[int]models.ShortURL) error {
+	for _, model := range models {
+		m.buffer[model.Code] = model
+	}
+
+	return nil
+}
+
 func (m *memoryRepository) FindByCode(code string) (*models.ShortURL, error) {
 	model, ok := m.buffer[code]
 	if !ok {
@@ -27,6 +35,17 @@ func (m *memoryRepository) FindByCode(code string) (*models.ShortURL, error) {
 	}
 
 	return &model, nil
+}
+
+func (m *memoryRepository) FindAllByUserCode(userCode int) (*map[string]models.ShortURL, error) {
+	var models = make(map[string]models.ShortURL)
+	for _, model := range m.buffer {
+		if model.UserCode == userCode {
+			models[model.Code] = model
+		}
+	}
+
+	return &models, nil
 }
 
 func (m *memoryRepository) IsInDatabase(code string) (bool, error) {

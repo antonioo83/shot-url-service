@@ -1,0 +1,86 @@
+package database
+
+import (
+	"context"
+	"github.com/antonioo83/shot-url-service/internal/models"
+	"github.com/antonioo83/shot-url-service/internal/repositories/interfaces"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
+)
+
+type shortURLRepository struct {
+	context    context.Context
+	connection *pgxpool.Pool
+}
+
+func NewShortURLRepository(context context.Context, pool *pgxpool.Pool) interfaces.ShotURLRepository {
+	return &shortURLRepository{context, pool}
+}
+
+func (s shortURLRepository) SaveURL(model models.ShortURL) error {
+	_, err := s.connection.Exec(
+		s.context,
+		"INSERT INTO short_url(correlation_id, user_code, code, original_url, short_url)VALUES ($1, $2, $3, $4, $5)",
+		model.CorrelationID, model.UserCode, model.Code, model.OriginalURL, model.ShortURL,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s shortURLRepository) SaveModels(models map[int]models.ShortURL) error {
+	tx, err := s.connection.Begin(s.context)
+	if err != nil {
+		panic(err)
+	}
+
+	b := &pgx.Batch{}
+	for _, model := range models {
+		b.Queue(
+			"INSERT INTO short_url(correlation_id, user_code, code, original_url, short_url)VALUES ($1, $2, $3, $4, $5)",
+			model.CorrelationID, model.UserCode, model.Code, model.OriginalURL, model.ShortURL,
+		)
+	}
+	tx.SendBatch(s.context, b)
+
+	return tx.Commit(s.context)
+}
+
+func (s shortURLRepository) FindByCode(code string) (*models.ShortURL, error) {
+	var model models.ShortURL
+	row := s.connection.QueryRow(s.context, "SELECT correlation_id, user_code, code, original_url, short_url FROM short_url WHERE code=$1", code)
+	err := row.Scan(&model.CorrelationID, &model.UserCode, &model.Code, &model.OriginalURL, &model.ShortURL)
+	if err == pgx.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	return &model, nil
+}
+
+func (s shortURLRepository) FindAllByUserCode(userCode int) (*map[string]models.ShortURL, error) {
+	var model = models.ShortURL{}
+	models := make(map[string]models.ShortURL)
+	rows, err := s.connection.Query(s.context, "SELECT correlation_id, user_code, code, original_url, short_url FROM short_url WHERE user_code=$1", userCode)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		err = rows.Scan(&model.CorrelationID, &model.UserCode, &model.Code, &model.OriginalURL, &model.ShortURL)
+		if err != nil {
+			return nil, err
+		}
+		models[model.Code] = model
+	}
+
+	return &models, nil
+}
+
+func (s shortURLRepository) IsInDatabase(code string) (bool, error) {
+	model, err := s.FindByCode(code)
+
+	return !(model == nil), err
+}

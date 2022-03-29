@@ -1,10 +1,12 @@
 package server
 
 import (
+	"context"
 	"github.com/antonioo83/shot-url-service/config"
 	"github.com/antonioo83/shot-url-service/internal/handlers"
 	"github.com/antonioo83/shot-url-service/internal/repositories/factory"
 	"github.com/antonioo83/shot-url-service/internal/utils"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -40,9 +42,20 @@ func TestGetRouters(t *testing.T) {
 		},
 	}
 
+	var pool *pgxpool.Pool
+	context := context.Background()
 	config := config.GetConfigSettings()
-	repository := factory.GetRepository(config)
-	r := GetRouters(config, repository)
+	if config.IsUseDatabase {
+		pool, _ := pgxpool.Connect(context, config.DatabaseDsn) //databaseRepository.Connect(context)
+		defer pool.Close()
+	}
+
+	r := GetRouters(RouteParameters{
+		Config:             config,
+		ShotURLRepository:  factory.GetRepository(context, pool, config),
+		UserRepository:     factory.GetUserRepository(context, pool, config),
+		DatabaseRepository: factory.GetDatabaseRepository(config),
+	})
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 

@@ -8,15 +8,15 @@ import (
 	"github.com/antonioo83/shot-url-service/internal/utils"
 )
 
-type fileRepository struct {
+type userRepository struct {
 	filename string
 }
 
-func NewFileRepository(filename string) interfaces.ShotURLRepository {
-	return &fileRepository{filename}
+func NewUserRepository(filename string) interfaces.UserRepository {
+	return &userRepository{filename}
 }
 
-func (r fileRepository) SaveURL(model models.ShortURL) error {
+func (r userRepository) Save(model models.User) error {
 	producer, err := GetProducer(r.filename)
 	if err != nil {
 		return err
@@ -30,25 +30,8 @@ func (r fileRepository) SaveURL(model models.ShortURL) error {
 	return nil
 }
 
-func (r *fileRepository) SaveModels(models map[int]models.ShortURL) error {
-	producer, err := GetProducer(r.filename)
-	if err != nil {
-		return err
-	}
-	defer utils.ResourceClose(producer.file)
-
-	for _, model := range models {
-		err = producer.encoder.Encode(&model)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (r fileRepository) FindByCode(code string) (*models.ShortURL, error) {
-	model := models.ShortURL{}
+func (r userRepository) FindByCode(code int) (*models.User, error) {
+	model := models.User{}
 	consumer, err := GetConsumer(r.filename)
 	if err != nil {
 		return nil, err
@@ -75,9 +58,8 @@ func (r fileRepository) FindByCode(code string) (*models.ShortURL, error) {
 	return nil, nil
 }
 
-func (r fileRepository) FindAllByUserCode(userCode int) (*map[string]models.ShortURL, error) {
-	var model = models.ShortURL{}
-	var models = make(map[string]models.ShortURL)
+func (r userRepository) GetLastModel() (*models.User, error) {
+	model := models.User{}
 	consumer, err := GetConsumer(r.filename)
 	if err != nil {
 		return nil, err
@@ -91,9 +73,6 @@ func (r fileRepository) FindAllByUserCode(userCode int) (*map[string]models.Shor
 			if err != nil {
 				return nil, fmt.Errorf("i can't decode json request: %s", err.Error())
 			}
-			if model.UserCode == userCode {
-				models[model.Code] = model
-			}
 		}
 	}
 
@@ -101,10 +80,10 @@ func (r fileRepository) FindAllByUserCode(userCode int) (*map[string]models.Shor
 		return nil, fmt.Errorf("scanner of a consumer got the error: %w", err)
 	}
 
-	return &models, nil
+	return &model, nil
 }
 
-func (r fileRepository) IsInDatabase(code string) (bool, error) {
+func (r userRepository) IsInDatabase(code int) (bool, error) {
 	model, err := r.FindByCode(code)
 
 	return !(model == nil), err
