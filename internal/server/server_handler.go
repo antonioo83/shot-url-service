@@ -4,6 +4,7 @@ import (
 	"compress/flate"
 	"github.com/antonioo83/shot-url-service/config"
 	"github.com/antonioo83/shot-url-service/internal/handlers"
+	authInterfaces "github.com/antonioo83/shot-url-service/internal/handlers/auth/interfaces"
 	"github.com/antonioo83/shot-url-service/internal/repositories/interfaces"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -16,6 +17,7 @@ type RouteParameters struct {
 	ShotURLRepository  interfaces.ShotURLRepository
 	UserRepository     interfaces.UserRepository
 	DatabaseRepository interfaces.DatabaseRepository
+	UserAuthHandler    authInterfaces.UserAuthHandler
 }
 
 func GetRouters(p RouteParameters) *chi.Mux {
@@ -28,27 +30,29 @@ func GetRouters(p RouteParameters) *chi.Mux {
 	compressor := middleware.NewCompressor(flate.DefaultCompression)
 	r.Use(compressor.Handler)
 
-	r = getCreateShortURLRoute(r, p.Config, p.ShotURLRepository, p.UserRepository)
-	r = getCreateJSONShortURLRoute(r, p.Config, p.ShotURLRepository, p.UserRepository)
+	r = getCreateShortURLRoute(r, p.Config, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler)
+	r = getCreateJSONShortURLRoute(r, p.Config, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler)
 	r = getOriginalURLRoute(r, p.ShotURLRepository)
-	r = getUserUrlsRoute(r, p.ShotURLRepository, p.UserRepository)
+	r = getUserUrlsRoute(r, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler)
 	r = getDatabaseStatus(r, p.DatabaseRepository)
-	r = getCreateShortURLBatchRoute(r, p.Config, p.ShotURLRepository, p.UserRepository)
+	r = getCreateShortURLBatchRoute(r, p.Config, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler)
 
 	return r
 }
 
-func getCreateShortURLRoute(r *chi.Mux, config config.Config, repository interfaces.ShotURLRepository, userRepository interfaces.UserRepository) *chi.Mux {
+func getCreateShortURLRoute(r *chi.Mux, config config.Config, repository interfaces.ShotURLRepository, userRepository interfaces.UserRepository,
+	userAuthHandler authInterfaces.UserAuthHandler) *chi.Mux {
 	r.Post("/", func(w http.ResponseWriter, r *http.Request) {
-		handlers.GetCreateShortURLResponse(w, r, config, repository, userRepository)
+		handlers.GetCreateShortURLResponse(w, r, config, repository, userRepository, userAuthHandler)
 	})
 
 	return r
 }
 
-func getCreateJSONShortURLRoute(r *chi.Mux, config config.Config, repository interfaces.ShotURLRepository, userRepository interfaces.UserRepository) *chi.Mux {
+func getCreateJSONShortURLRoute(r *chi.Mux, config config.Config, repository interfaces.ShotURLRepository, userRepository interfaces.UserRepository,
+	userAuthHandler authInterfaces.UserAuthHandler) *chi.Mux {
 	r.Post("/api/shorten", func(w http.ResponseWriter, r *http.Request) {
-		handlers.GetCreateJSONShortURLResponse(w, r, config, repository, userRepository)
+		handlers.GetCreateJSONShortURLResponse(w, r, config, repository, userRepository, userAuthHandler)
 	})
 
 	return r
@@ -62,9 +66,10 @@ func getOriginalURLRoute(r *chi.Mux, repository interfaces.ShotURLRepository) *c
 	return r
 }
 
-func getUserUrlsRoute(r *chi.Mux, shotURLRepository interfaces.ShotURLRepository, userRepository interfaces.UserRepository) *chi.Mux {
+func getUserUrlsRoute(r *chi.Mux, shotURLRepository interfaces.ShotURLRepository, userRepository interfaces.UserRepository,
+	userAuthHandler authInterfaces.UserAuthHandler) *chi.Mux {
 	r.Get("/api/user/urls", func(w http.ResponseWriter, r *http.Request) {
-		handlers.GetUserURLsResponse(w, r, shotURLRepository, userRepository)
+		handlers.GetUserURLsResponse(w, r, shotURLRepository, userRepository, userAuthHandler)
 	})
 
 	return r
@@ -78,9 +83,10 @@ func getDatabaseStatus(r *chi.Mux, databaseRepository interfaces.DatabaseReposit
 	return r
 }
 
-func getCreateShortURLBatchRoute(r *chi.Mux, config config.Config, repository interfaces.ShotURLRepository, userRepository interfaces.UserRepository) *chi.Mux {
+func getCreateShortURLBatchRoute(r *chi.Mux, config config.Config, repository interfaces.ShotURLRepository, userRepository interfaces.UserRepository,
+	userAuthHandler authInterfaces.UserAuthHandler) *chi.Mux {
 	r.Post("/api/shorten/batch", func(w http.ResponseWriter, r *http.Request) {
-		handlers.GetCreateShortURLBatchResponse(w, r, config, repository, userRepository)
+		handlers.GetCreateShortURLBatchResponse(w, r, config, repository, userRepository, userAuthHandler)
 	})
 
 	return r
