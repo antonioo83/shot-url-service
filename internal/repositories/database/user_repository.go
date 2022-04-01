@@ -45,7 +45,7 @@ func (u userRepository) GetLastModel() (*models.User, error) {
 	err := u.connection.QueryRow(u.context, "SELECT code, uid FROM users ORDER BY code DESC").Scan(&model.Code, &model.UID)
 	if err == pgx.ErrNoRows {
 
-		return &model, err
+		return &model, nil
 	}
 
 	return &model, err
