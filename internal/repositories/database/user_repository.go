@@ -44,7 +44,11 @@ func (u userRepository) IsInDatabase(code int) (bool, error) {
 func (u userRepository) GetLastModel() (*models.User, error) {
 	model := models.User{}
 	err := u.connection.QueryRow(u.context, "SELECT code, uid FROM users ORDER BY code DESC").Scan(&model.Code, &model.UID)
-	if err == pgx.ErrNoRows {
+	if err != nil {
+		if err == pgx.ErrNoRows {
+
+			return &model, nil
+		}
 
 		return &model, err
 	}
