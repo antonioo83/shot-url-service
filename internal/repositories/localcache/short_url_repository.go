@@ -20,7 +20,7 @@ func (m *memoryRepository) SaveURL(model models.ShortURL) error {
 	return nil
 }
 
-func (m *memoryRepository) SaveModels(models map[int]models.ShortURL) error {
+func (m *memoryRepository) SaveModels(models []models.ShortURL) error {
 	for _, model := range models {
 		m.buffer[model.Code] = model
 	}

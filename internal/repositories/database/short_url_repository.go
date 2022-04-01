@@ -31,7 +31,7 @@ func (s shortURLRepository) SaveURL(model models.ShortURL) error {
 	return nil
 }
 
-func (s shortURLRepository) SaveModels(models map[int]models.ShortURL) error {
+func (s shortURLRepository) SaveModels(models []models.ShortURL) error {
 	tx, err := s.connection.Begin(s.context)
 	if err != nil {
 		return fmt.Errorf("i can't save batch of models %v", err)

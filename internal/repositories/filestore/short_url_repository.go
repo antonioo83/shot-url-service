@@ -30,7 +30,7 @@ func (r fileRepository) SaveURL(model models.ShortURL) error {
 	return nil
 }
 
-func (r *fileRepository) SaveModels(models map[int]models.ShortURL) error {
+func (r *fileRepository) SaveModels(models []models.ShortURL) error {
 	producer, err := GetProducer(r.filename)
 	if err != nil {
 		return err
