@@ -79,7 +79,11 @@ func (a userAuthHandler) GetUserCode(token string) (int, error) {
 		return 0, fmt.Errorf("can't get user code: %v", err)
 	}
 
-	var val = userCode.(float64)
+	var val, ok2 = userCode.(float64)
+	if !ok2 {
+		return 0, fmt.Errorf("can't reduce user code: %s", userCode)
+	}
+
 	return int(val), nil
 }
 

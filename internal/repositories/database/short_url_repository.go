@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"fmt"
 	"github.com/antonioo83/shot-url-service/internal/models"
 	"github.com/antonioo83/shot-url-service/internal/repositories/interfaces"
 	"github.com/jackc/pgx/v4"
@@ -33,7 +34,7 @@ func (s shortURLRepository) SaveURL(model models.ShortURL) error {
 func (s shortURLRepository) SaveModels(models map[int]models.ShortURL) error {
 	tx, err := s.connection.Begin(s.context)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("i can't save batch of models %v", err)
 	}
 
 	b := &pgx.Batch{}

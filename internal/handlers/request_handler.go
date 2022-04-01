@@ -24,7 +24,7 @@ func uncompress(r *http.Request) ([]byte, error) {
 	if r.Header.Get(`Content-Encoding`) == `gzip` {
 		gz, err := gzip.NewReader(r.Body)
 		if err != nil {
-			return []byte("test"), err
+			return []byte(""), err
 		}
 		reader = gz
 		defer gz.Close()

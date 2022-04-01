@@ -165,7 +165,12 @@ func getSavedShortURLResponse(p savedShortURLParameters) {
 			}
 		}
 
-		if isInUser, _ := p.userRepository.IsInDatabase(user.Code); !isInUser {
+		isInUser, err := p.userRepository.IsInDatabase(user.Code)
+		if err != nil {
+			http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if !isInUser {
 			err = p.userRepository.Save(user)
 			if err != nil {
 				http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
@@ -218,6 +223,11 @@ func GetOriginalURLResponse(w http.ResponseWriter, r *http.Request, repository i
 	}
 }
 
+type userURLsResponse struct {
+	ShortURL    string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
+}
+
 func GetUserURLsResponse(w http.ResponseWriter, r *http.Request, repository interfaces.ShotURLRepository,
 	userRepository interfaces.UserRepository, userAuth authInterfaces.UserAuthHandler) {
 	user, err := userAuth.GetAuthUser(r, w)
@@ -226,18 +236,19 @@ func GetUserURLsResponse(w http.ResponseWriter, r *http.Request, repository inte
 		return
 	}
 
-	models, _ := repository.FindAllByUserCode(user.Code)
+	models, err := repository.FindAllByUserCode(user.Code)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	if len(*models) == 0 {
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
-	parseData := make([]map[string]interface{}, 0)
+	var parseData []userURLsResponse
 	for _, model := range *models {
-		var singleMap = make(map[string]interface{})
-		singleMap["short_url"] = model.ShortURL
-		singleMap["original_url"] = model.OriginalURL
-		parseData = append(parseData, singleMap)
+		parseData = append(parseData, userURLsResponse{model.ShortURL, model.OriginalURL})
 	}
 
 	w.Header().Add("Content-Type", "application/json")
@@ -252,6 +263,12 @@ func GetUserURLsResponse(w http.ResponseWriter, r *http.Request, repository inte
 func GetDBStatusResponse(w http.ResponseWriter, databaseRepository interfaces.DatabaseRepository) {
 	context := context.Background()
 	conn, err := databaseRepository.Connect(context)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	err = conn.Ping(context)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
