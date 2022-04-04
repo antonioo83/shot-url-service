@@ -60,8 +60,8 @@ func (s shortURLRepository) SaveModels(models []models.ShortURL) error {
 
 func (s shortURLRepository) FindByCode(code string) (*models.ShortURL, error) {
 	var model models.ShortURL
-	row := s.connection.QueryRow(s.context, "SELECT correlation_id, user_code, code, original_url, short_url FROM short_url WHERE code=$1", code)
-	err := row.Scan(&model.CorrelationID, &model.UserCode, &model.Code, &model.OriginalURL, &model.ShortURL)
+	row := s.connection.QueryRow(s.context, "SELECT correlation_id, user_code, code, original_url, short_url, active FROM short_url WHERE code=$1", code)
+	err := row.Scan(&model.CorrelationID, &model.UserCode, &model.Code, &model.OriginalURL, &model.ShortURL, &model.Active)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	} else if err != nil {
@@ -74,12 +74,12 @@ func (s shortURLRepository) FindByCode(code string) (*models.ShortURL, error) {
 func (s shortURLRepository) FindAllByUserCode(userCode int) (*map[string]models.ShortURL, error) {
 	var model = models.ShortURL{}
 	models := make(map[string]models.ShortURL)
-	rows, err := s.connection.Query(s.context, "SELECT correlation_id, user_code, code, original_url, short_url FROM short_url WHERE user_code=$1", userCode)
+	rows, err := s.connection.Query(s.context, "SELECT correlation_id, user_code, code, original_url, short_url, active FROM short_url WHERE user_code=$1", userCode)
 	if err != nil {
 		return nil, err
 	}
 	for rows.Next() {
-		err = rows.Scan(&model.CorrelationID, &model.UserCode, &model.Code, &model.OriginalURL, &model.ShortURL)
+		err = rows.Scan(&model.CorrelationID, &model.UserCode, &model.Code, &model.OriginalURL, &model.ShortURL, &model.Active)
 		if err != nil {
 			return nil, err
 		}
