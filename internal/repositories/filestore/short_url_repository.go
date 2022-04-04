@@ -110,7 +110,7 @@ func (r fileRepository) IsInDatabase(code string) (bool, error) {
 	return !(model == nil), err
 }
 
-func (r fileRepository) Delete(userCode int, correlationIDs []string) error {
+func (r fileRepository) Delete(userCode int, codes []string) error {
 
 	return fmt.Errorf("method wasn't implemented")
 }

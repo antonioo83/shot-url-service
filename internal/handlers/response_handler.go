@@ -287,18 +287,17 @@ func GetDeleteShortURLResponse(w http.ResponseWriter, r *http.Request, repositor
 		return
 	}
 
-	correlationIDs, err := GetCorrelationIDs(r)
+	codes, err := GetCorrelationIDs(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	err = repository.Delete(user.Code, *correlationIDs)
+	err = repository.Delete(user.Code, *codes)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusAccepted)
-
 }

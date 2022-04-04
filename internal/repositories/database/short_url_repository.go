@@ -95,10 +95,10 @@ func (s shortURLRepository) IsInDatabase(code string) (bool, error) {
 	return !(model == nil), err
 }
 
-func (s shortURLRepository) Delete(userCode int, correlationIDs []string) error {
+func (s shortURLRepository) Delete(userCode int, codes []string) error {
 	batch := &pgx.Batch{}
-	for _, correlationID := range correlationIDs {
-		batch.Queue("UPDATE short_url SET active=false WHERE user_code=$1 AND code=$2", userCode, correlationID)
+	for _, code := range codes {
+		batch.Queue("UPDATE short_url SET active=false WHERE user_code=$1 AND code=$2", userCode, code)
 	}
 	br := s.connection.SendBatch(context.Background(), batch)
 

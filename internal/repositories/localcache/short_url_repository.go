@@ -55,7 +55,7 @@ func (m *memoryRepository) IsInDatabase(code string) (bool, error) {
 	return ok, nil
 }
 
-func (m *memoryRepository) Delete(userCode int, correlationIDs []string) error {
+func (m *memoryRepository) Delete(userCode int, codes []string) error {
 
 	return fmt.Errorf("method wasn't implemented")
 }
