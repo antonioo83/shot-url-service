@@ -177,7 +177,7 @@ func getSavedShortURLResponse(p savedShortURLParameters) {
 		shortURL.CorrelationID = createShortURL.CorrelationID
 		shortURL.OriginalURL = createShortURL.OriginalURL
 		shortURL.ShortURL = shotURL
-		if !isInDB {
+		if p.config.IsUseDatabase || !isInDB {
 			shortURLModels = append(shortURLModels, shortURL)
 		}
 		shortURLResponses = append(shortURLResponses, shortURLResponse{shortURL.CorrelationID, shortURL.ShortURL})
