@@ -152,20 +152,6 @@ func getSavedShortURLResponse(p savedShortURLParameters) {
 			return
 		}
 
-		if !p.config.IsUseDatabase {
-			isInDB, err := p.repository.IsInDatabase(code)
-			if err != nil {
-				http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			if isInDB {
-				shortURLResponses = append(shortURLResponses, shortURLResponse{createShortURL.CorrelationID, shotURL})
-				p.responseFunc(p.rWriter, shortURLResponses, http.StatusCreated)
-				return
-			}
-		}
-
 		isInUser, err := p.userRepository.IsInDatabase(user.Code)
 		if err != nil {
 			http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
@@ -179,13 +165,21 @@ func getSavedShortURLResponse(p savedShortURLParameters) {
 			}
 		}
 
+		isInDB, err := p.repository.IsInDatabase(code)
+		if err != nil {
+			http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		var shortURL models.ShortURL
 		shortURL.Code = code
 		shortURL.UserCode = user.Code
 		shortURL.CorrelationID = createShortURL.CorrelationID
 		shortURL.OriginalURL = createShortURL.OriginalURL
 		shortURL.ShortURL = shotURL
-		shortURLModels = append(shortURLModels, shortURL)
+		if !isInDB {
+			shortURLModels = append(shortURLModels, shortURL)
+		}
 		shortURLResponses = append(shortURLResponses, shortURLResponse{shortURL.CorrelationID, shortURL.ShortURL})
 	}
 
