@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"fmt"
 	"github.com/antonioo83/shot-url-service/internal/models"
 	"github.com/antonioo83/shot-url-service/internal/repositories/interfaces"
 	"github.com/jackc/pgx/v4"
@@ -32,21 +31,30 @@ func (s shortURLRepository) SaveURL(model models.ShortURL) error {
 }
 
 func (s shortURLRepository) SaveModels(models []models.ShortURL) error {
-	tx, err := s.connection.Begin(s.context)
+	tx, err := s.connection.BeginTx(s.context, pgx.TxOptions{})
 	if err != nil {
-		return fmt.Errorf("i can't save batch of models %v", err)
+		return err
 	}
+	defer func() {
+		if err != nil {
+			tx.Rollback(s.context)
+		} else {
+			tx.Commit(s.context)
+		}
+	}()
 
-	b := &pgx.Batch{}
 	for _, model := range models {
-		b.Queue(
+		_, err = tx.Exec(
+			s.context,
 			"INSERT INTO short_url(correlation_id, user_code, code, original_url, short_url)VALUES ($1, $2, $3, $4, $5)",
 			model.CorrelationID, model.UserCode, model.Code, model.OriginalURL, model.ShortURL,
 		)
+		if err != nil {
+			return err
+		}
 	}
-	tx.SendBatch(s.context, b)
 
-	return tx.Commit(s.context)
+	return nil
 }
 
 func (s shortURLRepository) FindByCode(code string) (*models.ShortURL, error) {

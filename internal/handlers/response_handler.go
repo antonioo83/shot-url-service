@@ -144,6 +144,7 @@ func getSavedShortURLResponse(p savedShortURLParameters) {
 		return
 	}
 
+	var shortURLModels []models.ShortURL
 	for _, createShortURL := range *p.createShortURLs {
 		shotURL, code, err := GetShortURL(createShortURL.OriginalURL, p.request, p.config.BaseURL)
 		if err != nil {
@@ -184,20 +185,21 @@ func getSavedShortURLResponse(p savedShortURLParameters) {
 		shortURL.CorrelationID = createShortURL.CorrelationID
 		shortURL.OriginalURL = createShortURL.OriginalURL
 		shortURL.ShortURL = shotURL
-		err = p.repository.SaveURL(shortURL)
-		if err != nil {
-			var pgErr *pgconn.PgError
-			errors.As(err, &pgErr)
-			if pgErr.Code == pgerrcode.UniqueViolation {
-				shortURLResponses = append(shortURLResponses, shortURLResponse{createShortURL.CorrelationID, shotURL})
-				p.responseFunc(p.rWriter, shortURLResponses, http.StatusConflict)
-				return
-			} else {
-				http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		}
+		shortURLModels = append(shortURLModels, shortURL)
 		shortURLResponses = append(shortURLResponses, shortURLResponse{shortURL.CorrelationID, shortURL.ShortURL})
+	}
+
+	err = p.repository.SaveModels(shortURLModels)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		errors.As(err, &pgErr)
+		if pgErr.Code == pgerrcode.UniqueViolation {
+			p.responseFunc(p.rWriter, shortURLResponses, http.StatusConflict)
+			return
+		} else {
+			http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	p.responseFunc(p.rWriter, shortURLResponses, http.StatusCreated)

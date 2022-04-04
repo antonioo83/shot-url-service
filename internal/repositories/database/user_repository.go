@@ -26,7 +26,7 @@ func (u userRepository) FindByCode(code int) (*models.User, error) {
 	var model models.User
 	err := u.connection.QueryRow(u.context, "SELECT code, uid FROM users WHERE code=$1", code).Scan(&model.Code, &model.UID)
 	if err == pgx.ErrNoRows {
-		return &model, nil
+		return nil, nil
 	} else if err != nil {
 		return nil, err
 	}
