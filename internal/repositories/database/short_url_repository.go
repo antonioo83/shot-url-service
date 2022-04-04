@@ -98,7 +98,7 @@ func (s shortURLRepository) IsInDatabase(code string) (bool, error) {
 func (s shortURLRepository) Delete(userCode int, correlationIDs []string) error {
 	batch := &pgx.Batch{}
 	for _, correlationID := range correlationIDs {
-		batch.Queue("UPDATE short_url SET active=false WHERE user_code=$1 AND correlation_id=$2", userCode, correlationID)
+		batch.Queue("UPDATE short_url SET active=false WHERE user_code=$1 AND code=$2", userCode, correlationID)
 	}
 	br := s.connection.SendBatch(context.Background(), batch)
 
