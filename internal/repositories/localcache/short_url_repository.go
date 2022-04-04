@@ -2,6 +2,7 @@ package localcache
 
 import (
 	"errors"
+	"fmt"
 	"github.com/antonioo83/shot-url-service/internal/models"
 	"github.com/antonioo83/shot-url-service/internal/repositories/interfaces"
 )
@@ -52,4 +53,9 @@ func (m *memoryRepository) IsInDatabase(code string) (bool, error) {
 	_, ok := m.buffer[code]
 
 	return ok, nil
+}
+
+func (m *memoryRepository) Delete(userCode int, correlationIDs []string) error {
+
+	return fmt.Errorf("method wasn't implemented")
 }

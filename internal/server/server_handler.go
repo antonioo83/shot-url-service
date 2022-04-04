@@ -36,6 +36,7 @@ func GetRouters(p RouteParameters) *chi.Mux {
 	r = getUserUrlsRoute(r, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler)
 	r = getDatabaseStatus(r, p.DatabaseRepository)
 	r = getCreateShortURLBatchRoute(r, p.Config, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler)
+	r = getDeleteShortURLRoute(r, p.ShotURLRepository, p.UserAuthHandler)
 
 	return r
 }
@@ -87,6 +88,14 @@ func getCreateShortURLBatchRoute(r *chi.Mux, config config.Config, repository in
 	userAuthHandler authInterfaces.UserAuthHandler) *chi.Mux {
 	r.Post("/api/shorten/batch", func(w http.ResponseWriter, r *http.Request) {
 		handlers.GetCreateShortURLBatchResponse(w, r, config, repository, userRepository, userAuthHandler)
+	})
+
+	return r
+}
+
+func getDeleteShortURLRoute(r *chi.Mux, repository interfaces.ShotURLRepository, userAuthHandler authInterfaces.UserAuthHandler) *chi.Mux {
+	r.Delete("/api/user/urls", func(w http.ResponseWriter, r *http.Request) {
+		handlers.GetDeleteShortURLResponse(w, r, repository, userAuthHandler)
 	})
 
 	return r

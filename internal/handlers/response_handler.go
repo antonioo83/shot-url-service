@@ -177,6 +177,7 @@ func getSavedShortURLResponse(p savedShortURLParameters) {
 		shortURL.CorrelationID = createShortURL.CorrelationID
 		shortURL.OriginalURL = createShortURL.OriginalURL
 		shortURL.ShortURL = shotURL
+		shortURL.Active = true
 		if p.config.IsUseDatabase || !isInDB {
 			shortURLModels = append(shortURLModels, shortURL)
 		}
@@ -208,6 +209,10 @@ func GetOriginalURLResponse(w http.ResponseWriter, r *http.Request, repository i
 	model, err := repository.FindByCode(code)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if !model.Active {
+		w.WriteHeader(http.StatusGone)
 		return
 	}
 	if model == nil {
@@ -273,4 +278,27 @@ func GetDBStatusResponse(w http.ResponseWriter, databaseRepository interfaces.Da
 	databaseRepository.Disconnect(context, conn)
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func GetDeleteShortURLResponse(w http.ResponseWriter, r *http.Request, repository interfaces.ShotURLRepository, userAuth authInterfaces.UserAuthHandler) {
+	user, err := userAuth.GetAuthUser(r, w)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	correlationIDs, err := GetCorrelationIDs(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = repository.Delete(user.Code, *correlationIDs)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusAccepted)
+
 }

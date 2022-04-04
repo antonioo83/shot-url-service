@@ -7,4 +7,5 @@ type ShortURL struct {
 	Code          string
 	OriginalURL   string
 	ShortURL      string
+	Active        bool
 }
