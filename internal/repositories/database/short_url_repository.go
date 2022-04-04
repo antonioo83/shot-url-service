@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 	"github.com/antonioo83/shot-url-service/internal/models"
 	"github.com/antonioo83/shot-url-service/internal/repositories/interfaces"
 	"github.com/jackc/pgx/v4"
@@ -61,7 +62,7 @@ func (s shortURLRepository) FindByCode(code string) (*models.ShortURL, error) {
 	var model models.ShortURL
 	row := s.connection.QueryRow(s.context, "SELECT correlation_id, user_code, code, original_url, short_url FROM short_url WHERE code=$1", code)
 	err := row.Scan(&model.CorrelationID, &model.UserCode, &model.Code, &model.OriginalURL, &model.ShortURL)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	} else if err != nil {
 		return nil, err
