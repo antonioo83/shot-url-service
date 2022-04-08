@@ -94,8 +94,8 @@ func getCreateShortURLBatchRoute(r *chi.Mux, config config.Config, repository in
 }
 
 func getDeleteShortURLRoute(r *chi.Mux, config config.Config, repository interfaces.ShotURLRepository, userAuthHandler authInterfaces.UserAuthHandler) *chi.Mux {
-	jobCh := make(chan handlers.ShotUrlDelete)
-	runDeleteShortURLWorker(jobCh, repository, config.DeleteShotUrl.WorkersCount)
+	jobCh := make(chan handlers.ShotURLDelete)
+	runDeleteShortURLWorker(jobCh, repository, config.DeleteShotURL.WorkersCount)
 
 	r.Delete("/api/user/urls", func(w http.ResponseWriter, r *http.Request) {
 		handlers.GetDeleteShortURLResponse(w, r, config, repository, userAuthHandler, jobCh)
@@ -104,11 +104,11 @@ func getDeleteShortURLRoute(r *chi.Mux, config config.Config, repository interfa
 	return r
 }
 
-func runDeleteShortURLWorker(jobCh chan handlers.ShotUrlDelete, repository interfaces.ShotURLRepository, workersCount int) {
+func runDeleteShortURLWorker(jobCh chan handlers.ShotURLDelete, repository interfaces.ShotURLRepository, workersCount int) {
 	for i := 0; i < workersCount; i++ {
 		go func() {
-			for shotUrlDelete := range jobCh {
-				repository.Delete(shotUrlDelete.UserCode, shotUrlDelete.Codes)
+			for shotURLDelete := range jobCh {
+				repository.Delete(shotURLDelete.UserCode, shotURLDelete.Codes)
 			}
 		}()
 	}

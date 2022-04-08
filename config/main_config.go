@@ -17,7 +17,7 @@ type Config struct {
 	IsUseDatabase       bool
 	FilepathToDBDump    string
 	Auth                Auth
-	DeleteShotUrl       DeleteShotUrl
+	DeleteShotURL       DeleteShotURL
 }
 
 type Auth struct {
@@ -27,7 +27,7 @@ type Auth struct {
 	TokenName      string
 }
 
-type DeleteShotUrl struct {
+type DeleteShotURL struct {
 	WorkersCount int
 	ChunkLength  int
 }
@@ -85,8 +85,8 @@ func GetConfigSettings() Config {
 	cfg.Auth.SignKey = []byte(AuthSignKey)
 	cfg.Auth.TokenName = AuthTokenName
 
-	cfg.DeleteShotUrl.ChunkLength = 10
-	cfg.DeleteShotUrl.WorkersCount = 1
+	cfg.DeleteShotURL.ChunkLength = 10
+	cfg.DeleteShotURL.WorkersCount = 1
 
 	return cfg
 }
