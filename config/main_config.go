@@ -74,11 +74,11 @@ func GetConfigSettings() Config {
 	cfg.IsUseDatabase = true
 	if cfg.DatabaseDsn == "" {
 		cfg.IsUseDatabase = false
-	} else {
-		// GitHub test environment doesn't understand sql dump as file.
-		//cfg.FilepathToDBDump, _ = os.Getwd()
-		//cfg.FilepathToDBDump += "\\migrations\\create_tables.sql"
-	}
+	} //else {
+	// GitHub test environment doesn't understand sql dump as file.
+	//cfg.FilepathToDBDump, _ = os.Getwd()
+	//cfg.FilepathToDBDump += "\\migrations\\create_tables.sql"
+	//}
 
 	cfg.Auth.Alg = AuthEncodeAlgorithm
 	cfg.Auth.RememberMeTime = AuthRememberMeTime
