@@ -280,7 +280,13 @@ func GetDBStatusResponse(w http.ResponseWriter, databaseRepository interfaces.Da
 	w.WriteHeader(http.StatusOK)
 }
 
-func GetDeleteShortURLResponse(w http.ResponseWriter, r *http.Request, repository interfaces.ShotURLRepository, userAuth authInterfaces.UserAuthHandler) {
+type ShotUrlDelete struct {
+	UserCode int
+	Codes    []string
+}
+
+func GetDeleteShortURLResponse(w http.ResponseWriter, r *http.Request, config config.Config, repository interfaces.ShotURLRepository,
+	userAuth authInterfaces.UserAuthHandler, jobCh chan ShotUrlDelete) {
 	user, err := userAuth.GetAuthUser(r, w)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -293,11 +299,26 @@ func GetDeleteShortURLResponse(w http.ResponseWriter, r *http.Request, repositor
 		return
 	}
 
-	err = repository.Delete(user.Code, *codes)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	sendCodesForDeleteToChanel(
+		jobCh,
+		ShotUrlDelete{user.Code, *codes},
+		config.DeleteShotUrl.ChunkLength,
+	)
 
 	w.WriteHeader(http.StatusAccepted)
+}
+
+// I am using the workerpool pattern because I don't see reasons in using the fanIn pattern.
+func sendCodesForDeleteToChanel(jobCh chan ShotUrlDelete, shortUrlDelete ShotUrlDelete, chunkLength int) {
+	var chunkCodes []string
+	for _, code := range shortUrlDelete.Codes {
+		chunkCodes = append(chunkCodes, code)
+		if len(chunkCodes) == chunkLength {
+			jobCh <- ShotUrlDelete{shortUrlDelete.UserCode, chunkCodes}
+			chunkCodes = []string{}
+		}
+	}
+	if len(chunkCodes) > 0 {
+		jobCh <- ShotUrlDelete{shortUrlDelete.UserCode, chunkCodes}
+	}
 }

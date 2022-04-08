@@ -17,6 +17,7 @@ type Config struct {
 	IsUseDatabase       bool
 	FilepathToDBDump    string
 	Auth                Auth
+	DeleteShotUrl       DeleteShotUrl
 }
 
 type Auth struct {
@@ -24,6 +25,11 @@ type Auth struct {
 	RememberMeTime time.Duration
 	SignKey        []byte
 	TokenName      string
+}
+
+type DeleteShotUrl struct {
+	WorkersCount int
+	ChunkLength  int
 }
 
 var cfg Config
@@ -78,6 +84,9 @@ func GetConfigSettings() Config {
 	cfg.Auth.RememberMeTime = AuthRememberMeTime
 	cfg.Auth.SignKey = []byte(AuthSignKey)
 	cfg.Auth.TokenName = AuthTokenName
+
+	cfg.DeleteShotUrl.ChunkLength = 10
+	cfg.DeleteShotUrl.WorkersCount = 1
 
 	return cfg
 }

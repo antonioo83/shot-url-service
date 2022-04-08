@@ -36,7 +36,7 @@ func GetRouters(p RouteParameters) *chi.Mux {
 	r = getUserUrlsRoute(r, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler)
 	r = getDatabaseStatus(r, p.DatabaseRepository)
 	r = getCreateShortURLBatchRoute(r, p.Config, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler)
-	r = getDeleteShortURLRoute(r, p.ShotURLRepository, p.UserAuthHandler)
+	r = getDeleteShortURLRoute(r, p.Config, p.ShotURLRepository, p.UserAuthHandler)
 
 	return r
 }
@@ -93,10 +93,23 @@ func getCreateShortURLBatchRoute(r *chi.Mux, config config.Config, repository in
 	return r
 }
 
-func getDeleteShortURLRoute(r *chi.Mux, repository interfaces.ShotURLRepository, userAuthHandler authInterfaces.UserAuthHandler) *chi.Mux {
+func getDeleteShortURLRoute(r *chi.Mux, config config.Config, repository interfaces.ShotURLRepository, userAuthHandler authInterfaces.UserAuthHandler) *chi.Mux {
+	jobCh := make(chan handlers.ShotUrlDelete)
+	runDeleteShortURLWorker(jobCh, repository, config.DeleteShotUrl.WorkersCount)
+
 	r.Delete("/api/user/urls", func(w http.ResponseWriter, r *http.Request) {
-		handlers.GetDeleteShortURLResponse(w, r, repository, userAuthHandler)
+		handlers.GetDeleteShortURLResponse(w, r, config, repository, userAuthHandler, jobCh)
 	})
 
 	return r
+}
+
+func runDeleteShortURLWorker(jobCh chan handlers.ShotUrlDelete, repository interfaces.ShotURLRepository, workersCount int) {
+	for i := 0; i < workersCount; i++ {
+		go func() {
+			for shotUrlDelete := range jobCh {
+				repository.Delete(shotUrlDelete.UserCode, shotUrlDelete.Codes)
+			}
+		}()
+	}
 }
