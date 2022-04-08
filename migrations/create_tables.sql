@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS short_url (
     code character varying(50) NOT NULL,
     original_url character varying(500) NOT NULL,
     short_url character varying(500) NOT NULL,
+    active boolean DEFAULT true,
     CONSTRAINT "shortUrl" UNIQUE (short_url)
 );
 CREATE TABLE IF NOT EXISTS users (

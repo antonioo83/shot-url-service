@@ -2,41 +2,97 @@ package cookie
 
 import (
 	"fmt"
+	"github.com/antonioo83/shot-url-service/config"
+	"github.com/antonioo83/shot-url-service/internal/handlers/auth/interfaces"
 	"github.com/antonioo83/shot-url-service/internal/models"
+	repositoryInterfaces "github.com/antonioo83/shot-url-service/internal/repositories/interfaces"
 	"github.com/go-chi/jwtauth"
 	"net/http"
 	"time"
 )
 
-var tokenAuth *jwtauth.JWTAuth
+type userAuthHandler struct {
+	tokenAuth      *jwtauth.JWTAuth
+	userRepository repositoryInterfaces.UserRepository
+	config         config.Config
+}
 
-func SetToken(w http.ResponseWriter, user models.User) {
-	cookie := http.Cookie{Name: "token", Value: user.UID, Expires: time.Now().Add(60 * 30 * time.Second)}
+func NewUserAuthHandler(tokenAuth *jwtauth.JWTAuth,
+	userRepository repositoryInterfaces.UserRepository, config config.Config) interfaces.UserAuthHandler {
+	return &userAuthHandler{tokenAuth, userRepository, config}
+}
+
+func (a userAuthHandler) GetAuthUser(r *http.Request, w http.ResponseWriter) (models.User, error) {
+	var user models.User
+	var lastModel *models.User
+	var err error
+	token, _ := a.GetToken(r)
+	isValidate, _ := a.ValidateToken(token)
+	if token == "" || !isValidate {
+		lastModel, err = a.userRepository.GetLastModel()
+		if err != nil {
+			return user, fmt.Errorf("i can't get auth user: %w", err)
+		}
+		if lastModel.Code == 0 {
+			user.Code = 1
+			user.UID, err = a.GenerateToken(user.Code)
+		} else {
+			user = *lastModel
+			user.Code = user.Code + 1
+			user.UID, err = a.GenerateToken(user.Code)
+		}
+		a.SetToken(w, user.UID)
+	} else {
+		user.UID = token
+		user.Code, err = a.GetUserCode(token)
+	}
+
+	if err != nil {
+		return user, fmt.Errorf("i can't get auth user: %w", err)
+	}
+
+	return user, nil
+}
+
+func (a userAuthHandler) SetToken(w http.ResponseWriter, token string) {
+	cookie := http.Cookie{
+		Name:    a.config.Auth.TokenName,
+		Value:   token,
+		Expires: time.Now().Add(a.config.Auth.RememberMeTime),
+	}
 	http.SetCookie(w, &cookie)
 }
 
-func GetToken(r *http.Request) string {
-	token, err := r.Cookie("token")
+func (a userAuthHandler) GetToken(r *http.Request) (string, error) {
+	token, err := r.Cookie(a.config.Auth.TokenName)
 	if err != nil {
-		return ""
+		return "", err
 	}
 
-	return token.Value
+	return token.Value, err
 }
 
-func GetUserCode(token string) int {
-	data := getExtractedData(token)
+func (a userAuthHandler) GetUserCode(token string) (int, error) {
+	data, err := a.getExtractedData(token)
 	userCode, ok := data["user_code"]
 	if !ok {
-		return 0
+		return 0, fmt.Errorf("can't get user code: %v", err)
 	}
 
-	var val = userCode.(float64)
-	return int(val)
+	var val, ok2 = userCode.(float64)
+	if !ok2 {
+		return 0, fmt.Errorf("can't reduce user code: %s", userCode)
+	}
+
+	return int(val), nil
 }
 
-func GenerateToken(code int) (string, error) {
-	tokenAuth = jwtauth.New("HS256", []byte("secret"), nil)
+func (a userAuthHandler) GenerateToken(code int) (string, error) {
+	tokenAuth := jwtauth.New(
+		a.config.Auth.Alg,
+		a.config.Auth.SignKey,
+		nil,
+	)
 	_, tokenString, err := tokenAuth.Encode(map[string]interface{}{"user_code": code})
 	if err != nil {
 		return "", fmt.Errorf("i can't generate token: %w", err)
@@ -45,19 +101,26 @@ func GenerateToken(code int) (string, error) {
 	return tokenString, nil
 }
 
-func ValidateToken(token string) bool {
-	user := getExtractedData(token)
+func (a userAuthHandler) ValidateToken(token string) (bool, error) {
+	user, err := a.getExtractedData(token)
+	if err != nil {
+		return false, fmt.Errorf("can't decode token from a cookie: %v", err)
+	}
 	_, ok := user["user_code"]
 
-	return ok
+	return ok, nil
 }
 
-func getExtractedData(token string) map[string]interface{} {
-	tokenAuth = jwtauth.New("HS256", []byte("secret"), nil)
+func (a userAuthHandler) getExtractedData(token string) (map[string]interface{}, error) {
+	tokenAuth := jwtauth.New(
+		a.config.Auth.Alg,
+		a.config.Auth.SignKey,
+		nil,
+	)
 	jwtToken, err := tokenAuth.Decode(token)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("can't decode token from a cookie: %v", err)
 	}
 
-	return jwtToken.PrivateClaims()
+	return jwtToken.PrivateClaims(), nil
 }

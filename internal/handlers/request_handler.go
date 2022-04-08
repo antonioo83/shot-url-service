@@ -24,7 +24,7 @@ func uncompress(r *http.Request) ([]byte, error) {
 	if r.Header.Get(`Content-Encoding`) == `gzip` {
 		gz, err := gzip.NewReader(r.Body)
 		if err != nil {
-			return []byte("test"), err
+			return []byte(""), err
 		}
 		reader = gz
 		defer gz.Close()
@@ -64,4 +64,15 @@ func GetBatchRequestsFromBody(r *http.Request) (*[]CreateShortURL, error) {
 	}
 
 	return &requests, nil
+}
+
+func GetCorrelationIDs(r *http.Request) (*[]string, error) {
+	var correlationIDs []string
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&correlationIDs)
+	if err != nil {
+		return nil, fmt.Errorf("i can't decode json request: %w", err)
+	}
+
+	return &correlationIDs, nil
 }

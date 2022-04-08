@@ -4,8 +4,10 @@ import (
 	"context"
 	"github.com/antonioo83/shot-url-service/config"
 	"github.com/antonioo83/shot-url-service/internal/handlers"
+	authFactory "github.com/antonioo83/shot-url-service/internal/handlers/auth/factory"
 	"github.com/antonioo83/shot-url-service/internal/repositories/factory"
 	"github.com/antonioo83/shot-url-service/internal/utils"
+	"github.com/go-chi/jwtauth"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -42,6 +44,7 @@ func TestGetRouters(t *testing.T) {
 		},
 	}
 
+	var tokenAuth *jwtauth.JWTAuth
 	var pool *pgxpool.Pool
 	context := context.Background()
 	config := config.GetConfigSettings()
@@ -50,11 +53,13 @@ func TestGetRouters(t *testing.T) {
 		defer pool.Close()
 	}
 
+	userRepository := factory.GetUserRepository(context, pool, config)
 	r := GetRouters(RouteParameters{
 		Config:             config,
 		ShotURLRepository:  factory.GetRepository(context, pool, config),
-		UserRepository:     factory.GetUserRepository(context, pool, config),
+		UserRepository:     userRepository,
 		DatabaseRepository: factory.GetDatabaseRepository(config),
+		UserAuthHandler:    authFactory.NewAuthHandler(tokenAuth, userRepository, config),
 	})
 	ts := httptest.NewServer(r)
 	defer ts.Close()

@@ -4,7 +4,7 @@ import (
 	"flag"
 	"github.com/caarlos0/env/v6"
 	"log"
-	"os"
+	"time"
 )
 
 type Config struct {
@@ -16,6 +16,20 @@ type Config struct {
 	DatabaseDsn         string `env:"DATABASE_DSN"`
 	IsUseDatabase       bool
 	FilepathToDBDump    string
+	Auth                Auth
+	DeleteShotURL       DeleteShotURL
+}
+
+type Auth struct {
+	Alg            string
+	RememberMeTime time.Duration
+	SignKey        []byte
+	TokenName      string
+}
+
+type DeleteShotURL struct {
+	WorkersCount int
+	ChunkLength  int
 }
 
 var cfg Config
@@ -26,6 +40,10 @@ func GetConfigSettings() Config {
 	//const FileStoragePath string = "..\\data\\short_url_database.txt"
 	const UserFileStoragePath string = "user_database.txt"
 	//const DatabaseDSN = "postgres://postgres:433370@localhost:5433/postgres"
+	const AuthEncodeAlgorithm = "HS256"
+	const AuthRememberMeTime = 60 * 30 * time.Second
+	const AuthSignKey = "secret"
+	const AuthTokenName = "token"
 
 	err := env.Parse(&cfg)
 	if err != nil {
@@ -56,10 +74,19 @@ func GetConfigSettings() Config {
 	cfg.IsUseDatabase = true
 	if cfg.DatabaseDsn == "" {
 		cfg.IsUseDatabase = false
-	} else {
-		cfg.FilepathToDBDump, _ = os.Getwd()
-		cfg.FilepathToDBDump += "\\migrations\\create_tables.sql"
-	}
+	} //else {
+	// GitHub test environment doesn't understand sql dump as file.
+	//cfg.FilepathToDBDump, _ = os.Getwd()
+	//cfg.FilepathToDBDump += "\\migrations\\create_tables.sql"
+	//}
+
+	cfg.Auth.Alg = AuthEncodeAlgorithm
+	cfg.Auth.RememberMeTime = AuthRememberMeTime
+	cfg.Auth.SignKey = []byte(AuthSignKey)
+	cfg.Auth.TokenName = AuthTokenName
+
+	cfg.DeleteShotURL.ChunkLength = 10
+	cfg.DeleteShotURL.WorkersCount = 1
 
 	return cfg
 }

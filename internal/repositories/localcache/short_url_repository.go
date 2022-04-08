@@ -2,6 +2,7 @@ package localcache
 
 import (
 	"errors"
+	"fmt"
 	"github.com/antonioo83/shot-url-service/internal/models"
 	"github.com/antonioo83/shot-url-service/internal/repositories/interfaces"
 )
@@ -20,7 +21,7 @@ func (m *memoryRepository) SaveURL(model models.ShortURL) error {
 	return nil
 }
 
-func (m *memoryRepository) SaveModels(models map[int]models.ShortURL) error {
+func (m *memoryRepository) SaveModels(models []models.ShortURL) error {
 	for _, model := range models {
 		m.buffer[model.Code] = model
 	}
@@ -52,4 +53,9 @@ func (m *memoryRepository) IsInDatabase(code string) (bool, error) {
 	_, ok := m.buffer[code]
 
 	return ok, nil
+}
+
+func (m *memoryRepository) Delete(userCode int, codes []string) error {
+
+	return fmt.Errorf("method wasn't implemented")
 }
