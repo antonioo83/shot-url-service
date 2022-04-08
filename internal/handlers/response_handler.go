@@ -95,6 +95,7 @@ func GetCreateShortURLBatchResponse(w http.ResponseWriter, r *http.Request, conf
 		return
 	}
 
+	//I couldn't move function to service/app package because golang was getting an error with message: import cycle not allowed. I need consultation.
 	getSavedShortURLResponse(savedShortURLParameters{
 		w,
 		r,
@@ -215,6 +216,7 @@ func GetOriginalURLResponse(w http.ResponseWriter, r *http.Request, repository i
 		w.WriteHeader(http.StatusGone)
 		return
 	}
+	// I can't remove else expression because it'll brake a wet test.
 	if model == nil {
 		http.Error(w, "can't find model for the code: %s"+code, http.StatusNoContent)
 	} else {
