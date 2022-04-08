@@ -309,16 +309,16 @@ func GetDeleteShortURLResponse(w http.ResponseWriter, r *http.Request, config co
 }
 
 // I am using the workerpool pattern because I don't see reasons in using the fanIn pattern.
-func sendCodesForDeleteToChanel(jobCh chan ShotURLDelete, shortUrlDelete ShotURLDelete, chunkLength int) {
+func sendCodesForDeleteToChanel(jobCh chan ShotURLDelete, shortURLDelete ShotURLDelete, chunkLength int) {
 	var chunkCodes []string
-	for _, code := range shortUrlDelete.Codes {
+	for _, code := range shortURLDelete.Codes {
 		chunkCodes = append(chunkCodes, code)
 		if len(chunkCodes) == chunkLength {
-			jobCh <- ShotURLDelete{shortUrlDelete.UserCode, chunkCodes}
+			jobCh <- ShotURLDelete{shortURLDelete.UserCode, chunkCodes}
 			chunkCodes = []string{}
 		}
 	}
 	if len(chunkCodes) > 0 {
-		jobCh <- ShotURLDelete{shortUrlDelete.UserCode, chunkCodes}
+		jobCh <- ShotURLDelete{shortURLDelete.UserCode, chunkCodes}
 	}
 }
