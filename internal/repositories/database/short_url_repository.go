@@ -21,8 +21,8 @@ func NewShortURLRepository(context context.Context, pool *pgxpool.Pool) interfac
 func (s shortURLRepository) SaveURL(model models.ShortURL) error {
 	_, err := s.connection.Exec(
 		s.context,
-		"INSERT INTO short_url(correlation_id, user_code, code, original_url, short_url)VALUES ($1, $2, $3, $4, $5)",
-		model.CorrelationID, model.UserCode, model.Code, model.OriginalURL, model.ShortURL,
+		"INSERT INTO short_url(correlation_id, user_code, code, original_url, short_url, active)VALUES ($1, $2, $3, $4, $5, $6)",
+		model.CorrelationID, model.UserCode, model.Code, model.OriginalURL, model.ShortURL, model.Active,
 	)
 	if err != nil {
 		return err
@@ -47,8 +47,8 @@ func (s shortURLRepository) SaveModels(models []models.ShortURL) error {
 	for _, model := range models {
 		_, err = tx.Exec(
 			s.context,
-			"INSERT INTO short_url(correlation_id, user_code, code, original_url, short_url)VALUES ($1, $2, $3, $4, $5)",
-			model.CorrelationID, model.UserCode, model.Code, model.OriginalURL, model.ShortURL,
+			"INSERT INTO short_url(correlation_id, user_code, code, original_url, short_url, active)VALUES ($1, $2, $3, $4, $5, $6)",
+			model.CorrelationID, model.UserCode, model.Code, model.OriginalURL, model.ShortURL, model.Active,
 		)
 		if err != nil {
 			return err
