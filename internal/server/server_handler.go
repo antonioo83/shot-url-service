@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"net/http"
+	"net/http/pprof"
 	"time"
 )
 
@@ -37,6 +38,17 @@ func GetRouters(p RouteParameters) *chi.Mux {
 	r = getDatabaseStatus(r, p.DatabaseRepository)
 	r = getCreateShortURLBatchRoute(r, p.Config, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler)
 	r = getDeleteShortURLRoute(r, p.Config, p.ShotURLRepository, p.UserAuthHandler)
+	r.HandleFunc("/debug/pprof/", pprof.Index)
+	r.HandleFunc("/debug/pprof/allocs", pprof.Index)
+	r.HandleFunc("/debug/pprof/block", pprof.Index)
+	r.HandleFunc("/debug/pprof/goroutine", pprof.Index)
+	r.HandleFunc("/debug/pprof/heap", pprof.Index)
+	r.HandleFunc("/debug/pprof/mutex", pprof.Index)
+	r.HandleFunc("/debug/pprof/threadcreate", pprof.Index)
+	r.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	r.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	r.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	r.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
 	return r
 }

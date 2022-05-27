@@ -12,6 +12,7 @@ import (
 	"log"
 	"net/http"
 )
+import _ "net/http/pprof"
 
 func main() {
 	config := config.GetConfigSettings()
