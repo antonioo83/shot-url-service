@@ -1,3 +1,4 @@
+// Package config This module is intended for service configuration.
 package config
 
 import (
@@ -7,43 +8,47 @@ import (
 	"time"
 )
 
+// Config Configuration settings.
 type Config struct {
-	ServerAddress       string `env:"SERVER_ADDRESS"`
-	BaseURL             string `env:"BASE_URL"`
-	FileStoragePath     string `env:"FILE_STORAGE_PATH"`
-	UserFileStoragePath string `env:"USER_FILE_STORAGE_PATH"`
-	IsUseFileStore      bool
-	DatabaseDsn         string `env:"DATABASE_DSN"`
-	IsUseDatabase       bool
-	FilepathToDBDump    string
-	Auth                Auth
-	DeleteShotURL       DeleteShotURL
+	ServerAddress       string        `env:"SERVER_ADDRESS"`         // The address of the local server.
+	BaseURL             string        `env:"BASE_URL"`               // Base address of the result short url
+	FileStoragePath     string        `env:"FILE_STORAGE_PATH"`      // Full filepath to the shot url file storage.
+	UserFileStoragePath string        `env:"USER_FILE_STORAGE_PATH"` // Full filepath to the user file storage.
+	IsUseFileStore      bool          // Is use file store ?
+	DatabaseDsn         string        `env:"DATABASE_DSN"` // Database connection string.
+	IsUseDatabase       bool          // Is use database ?
+	FilepathToDBDump    string        // Filepath to the SQL dump for initialization database.
+	Auth                Auth          //
+	DeleteShotURL       DeleteShotURL //
 }
 
+// Auth User Authorization settings.
 type Auth struct {
-	Alg            string
-	RememberMeTime time.Duration
-	SignKey        []byte
-	TokenName      string
+	Alg            string        //Type of encryption algorithm.
+	RememberMeTime time.Duration //Time of storage cookie.
+	SignKey        []byte        // Authorization secret token name.
+	TokenName      string        // Authorization token name.
 }
 
+//DeleteShotURL Settings of deleting short url rows from database.
 type DeleteShotURL struct {
-	WorkersCount int
-	ChunkLength  int
+	WorkersCount int //Workers count.
+	ChunkLength  int //Length of rows chunk.
 }
 
 var cfg Config
 
+// GetConfigSettings — returns configuration settings.
 func GetConfigSettings() Config {
-	const ServerAddress string = ":8080"
-	const BaseURL string = ""
+	const ServerAddress string = ":8080" // The address of the local server.
+	const BaseURL string = ""            //Base address of the result short url
 	//const FileStoragePath string = "..\\data\\short_url_database.txt"
-	const UserFileStoragePath string = "user_database.txt"
+	const UserFileStoragePath string = "user_database.txt" // Full filepath to the user file storage.
 	//const DatabaseDSN = "postgres://postgres:433370@localhost:5433/postgres"
 	const AuthEncodeAlgorithm = "HS256"
-	const AuthRememberMeTime = 60 * 30 * time.Second
-	const AuthSignKey = "secret"
-	const AuthTokenName = "token"
+	const AuthRememberMeTime = 60 * 30 * time.Second //Cookie storage time.
+	const AuthSignKey = "secret"                     // Authorization secret token name.
+	const AuthTokenName = "token"                    // Authorization token name.
 
 	err := env.Parse(&cfg)
 	if err != nil {
