@@ -1,0 +1,4 @@
+POST http://localhost:8080/api/shorten/batch
+Content-Type: application/json
+
+[{"correlation_id":"463186fc-72c8-4204-ae3c-48359c2f63bd","original_url":"http://rbc.ru/"},{"correlation_id":"a0a609c9-86ed-4f16-8f49-ded9b6f53211","original_url":"https://stackoverflow.com/questions/15240884/how-can-i-handle-http-requests-of-different-methods-to-in-go_User3_19"}]
