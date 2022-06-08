@@ -8,7 +8,7 @@ func ExampleGetCreateShortURLRoute() {
 	r := chi.NewRouter()
 	p := RouteParameters{}
 	r = GetCreateShortURLRoute(r, p.Config, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler)
-	// Output:
+	// Output (parallel):
 	// # Request
 	// POST http://localhost:8080/
 	// Content-Type: text/plain; charset=utf-8
@@ -26,7 +26,7 @@ func ExampleGetCreateJSONShortURLRoute() {
 	r := chi.NewRouter()
 	p := RouteParameters{}
 	r = GetCreateJSONShortURLRoute(r, p.Config, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler)
-	// Output:
+	// Output (parallel):
 	// # Request
 	// POST http://localhost:8080/api/shorten
 	// Content-Type: application/json
@@ -44,7 +44,7 @@ func ExampleGetOriginalURLRoute() {
 	r := chi.NewRouter()
 	p := RouteParameters{}
 	r = GetOriginalURLRoute(r, p.ShotURLRepository)
-	// Output:
+	// Output (parallel):
 	// # Request
 	// GET http://localhost:8080/code
 	//
@@ -56,7 +56,7 @@ func ExampleGetUserUrlsRoute() {
 	r := chi.NewRouter()
 	p := RouteParameters{}
 	r = GetUserUrlsRoute(r, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler)
-	// Output:
+	// Output (parallel):
 	// # Request
 	// GET http://localhost:8080/api/user/urls
 	//
@@ -71,7 +71,7 @@ func ExampleGetDatabaseStatus() {
 	r := chi.NewRouter()
 	p := RouteParameters{}
 	r = GetDatabaseStatus(r, p.DatabaseRepository)
-	// Output:
+	// Output (parallel):
 	// # Request
 	// GET http://localhost:8080/ping
 	//
@@ -84,7 +84,7 @@ func ExampleGetCreateShortURLBatchRoute() {
 	r := chi.NewRouter()
 	p := RouteParameters{}
 	r = GetCreateShortURLBatchRoute(r, p.Config, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler)
-	// Output:
+	// Output (parallel):
 	// # Request
 	// POST http://localhost:8080/api/shorten/batch
 	// Content-Type: application/json
