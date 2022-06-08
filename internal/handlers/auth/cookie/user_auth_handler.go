@@ -17,11 +17,13 @@ type userAuthHandler struct {
 	config         config.Config
 }
 
+// NewUserAuthHandler create userAuthHandler instance.
 func NewUserAuthHandler(tokenAuth *jwtauth.JWTAuth,
 	userRepository repositoryInterfaces.UserRepository, config config.Config) interfaces.UserAuthHandler {
 	return &userAuthHandler{tokenAuth, userRepository, config}
 }
 
+// GetAuthUser get authorized user.
 func (a userAuthHandler) GetAuthUser(r *http.Request, w http.ResponseWriter) (models.User, error) {
 	var user models.User
 	var lastModel *models.User
@@ -54,15 +56,17 @@ func (a userAuthHandler) GetAuthUser(r *http.Request, w http.ResponseWriter) (mo
 	return user, nil
 }
 
+// SetToken set token to a cookie.
 func (a userAuthHandler) SetToken(w http.ResponseWriter, token string) {
 	cookie := http.Cookie{
 		Name:    a.config.Auth.TokenName,
 		Value:   token,
-		Expires: time.Now().Add(a.config.Auth.RememberMeTime),
+		Expires: time.Now().Add(a.config.Auth.CookieTTL),
 	}
 	http.SetCookie(w, &cookie)
 }
 
+// GetToken get token from a cookie.
 func (a userAuthHandler) GetToken(r *http.Request) (string, error) {
 	token, err := r.Cookie(a.config.Auth.TokenName)
 	if err != nil {
@@ -72,6 +76,7 @@ func (a userAuthHandler) GetToken(r *http.Request) (string, error) {
 	return token.Value, err
 }
 
+// GetUserCode get user code.
 func (a userAuthHandler) GetUserCode(token string) (int, error) {
 	data, err := a.getExtractedData(token)
 	userCode, ok := data["user_code"]
@@ -87,6 +92,7 @@ func (a userAuthHandler) GetUserCode(token string) (int, error) {
 	return int(val), nil
 }
 
+// GenerateToken generate token.
 func (a userAuthHandler) GenerateToken(code int) (string, error) {
 	tokenAuth := jwtauth.New(
 		a.config.Auth.Alg,
@@ -101,6 +107,7 @@ func (a userAuthHandler) GenerateToken(code int) (string, error) {
 	return tokenString, nil
 }
 
+// ValidateToken validate token.
 func (a userAuthHandler) ValidateToken(token string) (bool, error) {
 	user, err := a.getExtractedData(token)
 	if err != nil {

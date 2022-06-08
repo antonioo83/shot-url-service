@@ -57,13 +57,7 @@ func GetRouters(p RouteParameters) *chi.Mux {
 
 // GetCreateShortURLRoute Returns a route to create short url.
 //
-// Example:
-//
 // POST http://localhost:8080/
-//
-// Content-Type: text/plain; charset=utf-8
-//
-// https://stackoverflow.com/questions/15240884/in-go
 func GetCreateShortURLRoute(r *chi.Mux, config config.Config, repository interfaces.ShotURLRepository, userRepository interfaces.UserRepository,
 	userAuthHandler authInterfaces.UserAuthHandler) *chi.Mux {
 	r.Post("/", func(w http.ResponseWriter, r *http.Request) {
@@ -75,13 +69,7 @@ func GetCreateShortURLRoute(r *chi.Mux, config config.Config, repository interfa
 
 // GetCreateJSONShortURLRoute Returns a route to get short url in json format.
 //
-// Example:
-//
 // POST http://localhost:8080/api/shorten
-//
-// Content-Type: application/json
-//
-// {"url": "https://stackoverflow.com/questions/15240884/in-go"}
 func GetCreateJSONShortURLRoute(r *chi.Mux, config config.Config, repository interfaces.ShotURLRepository, userRepository interfaces.UserRepository,
 	userAuthHandler authInterfaces.UserAuthHandler) *chi.Mux {
 	r.Post("/api/shorten", func(w http.ResponseWriter, r *http.Request) {
@@ -93,11 +81,7 @@ func GetCreateJSONShortURLRoute(r *chi.Mux, config config.Config, repository int
 
 // GetOriginalURLRoute Returns a route to get short url by code.
 //
-// Example:
-//
 // GET http://localhost:8080/code
-//
-// Content-Type: text/plain
 func GetOriginalURLRoute(r *chi.Mux, repository interfaces.ShotURLRepository) *chi.Mux {
 	r.Get("/{code}", func(w http.ResponseWriter, r *http.Request) {
 		handlers.GetOriginalURLResponse(w, r, repository)
@@ -108,11 +92,7 @@ func GetOriginalURLRoute(r *chi.Mux, repository interfaces.ShotURLRepository) *c
 
 // GetUserUrlsRoute Returns a route to get short url as array.
 //
-// Example:
-//
 // GET http://localhost:8080/api/user/urls
-//
-// Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
 func GetUserUrlsRoute(r *chi.Mux, shotURLRepository interfaces.ShotURLRepository, userRepository interfaces.UserRepository,
 	userAuthHandler authInterfaces.UserAuthHandler) *chi.Mux {
 	r.Get("/api/user/urls", func(w http.ResponseWriter, r *http.Request) {
@@ -123,8 +103,6 @@ func GetUserUrlsRoute(r *chi.Mux, shotURLRepository interfaces.ShotURLRepository
 }
 
 // GetDatabaseStatus Returns a route to get database status.
-//
-// Example:
 //
 // GET http://localhost:8080/ping
 func GetDatabaseStatus(r *chi.Mux, databaseRepository interfaces.DatabaseRepository) *chi.Mux {
@@ -137,13 +115,7 @@ func GetDatabaseStatus(r *chi.Mux, databaseRepository interfaces.DatabaseReposit
 
 // GetCreateShortURLBatchRoute Returns a route to create an array of short URLs.
 //
-// Example:
-//
 // POST http://localhost:8080/api/shorten/batch
-//
-// Content-Type: application/json
-//
-// [{"correlation_id":"463186fc","original_url":"http://rbc.ru/"}]
 func GetCreateShortURLBatchRoute(r *chi.Mux, config config.Config, repository interfaces.ShotURLRepository, userRepository interfaces.UserRepository,
 	userAuthHandler authInterfaces.UserAuthHandler) *chi.Mux {
 	r.Post("/api/shorten/batch", func(w http.ResponseWriter, r *http.Request) {
@@ -155,15 +127,7 @@ func GetCreateShortURLBatchRoute(r *chi.Mux, config config.Config, repository in
 
 // GetDeleteShortURLRoute Returns a route to delete an array of short URLs.
 //
-// Example:
-//
 // DELETE http://localhost:8080/api/user/urls
-//
-// Content-Type: application/json
-//
-// Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
-//
-// ["code"]
 func GetDeleteShortURLRoute(r *chi.Mux, config config.Config, repository interfaces.ShotURLRepository, userAuthHandler authInterfaces.UserAuthHandler) *chi.Mux {
 	jobCh := make(chan handlers.ShotURLDelete)
 	RunDeleteShortURLWorker(jobCh, repository, config.DeleteShotURL.WorkersCount)

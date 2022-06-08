@@ -9,6 +9,7 @@ import (
 	"net/http"
 )
 
+// GetShortURL returns generated short URL.
 func GetShortURL(originalURL string, r *http.Request, newBaseURL string) (string, string, error) {
 	urlID, err := generateShortLink(originalURL, "userId")
 

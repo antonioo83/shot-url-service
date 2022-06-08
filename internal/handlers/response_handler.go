@@ -20,6 +20,7 @@ type shortURLResponse struct {
 	ShortURL      string `json:"short_url"`
 }
 
+// GetCreateJSONShortURLResponse creates a short URL by json request in the storage and returns the response.
 func GetCreateJSONShortURLResponse(w http.ResponseWriter, r *http.Request, config config.Config, repository interfaces.ShotURLRepository,
 	userRepository interfaces.UserRepository, userAuth authInterfaces.UserAuthHandler) {
 	createShortURL, err := GetOriginalURLFromBody(r)
@@ -62,6 +63,7 @@ func getJSONResponse(key string, value string) ([]byte, error) {
 	return jsonResp, nil
 }
 
+// GetCreateShortURLResponse creates a short URL in the storage and returns the response.
 func GetCreateShortURLResponse(w http.ResponseWriter, r *http.Request, config config.Config, repository interfaces.ShotURLRepository,
 	userRepository interfaces.UserRepository, userAuth authInterfaces.UserAuthHandler) {
 	createShortURL, err := GetBody(r)
@@ -87,6 +89,7 @@ func GetCreateShortURLResponse(w http.ResponseWriter, r *http.Request, config co
 	})
 }
 
+// GetCreateShortURLBatchResponse creates a array of short URLs in the storage and returns the response.
 func GetCreateShortURLBatchResponse(w http.ResponseWriter, r *http.Request, config config.Config, repository interfaces.ShotURLRepository,
 	userRepository interfaces.UserRepository, userAuth authInterfaces.UserAuthHandler) {
 	createShortURLs, err := GetBatchRequestsFromBody(r)
@@ -201,6 +204,7 @@ func getSavedShortURLResponse(p savedShortURLParameters) {
 	p.responseFunc(p.rWriter, shortURLResponses, http.StatusCreated)
 }
 
+// GetOriginalURLResponse returns original URL by code.
 func GetOriginalURLResponse(w http.ResponseWriter, r *http.Request, repository interfaces.ShotURLRepository) {
 	code := chi.URLParam(r, "code")
 	if code == "" {
@@ -231,6 +235,7 @@ type userURLsResponse struct {
 	OriginalURL string `json:"original_url"`
 }
 
+// GetUserURLsResponse returns all short URLs for a given user.
 func GetUserURLsResponse(w http.ResponseWriter, r *http.Request, repository interfaces.ShotURLRepository,
 	userRepository interfaces.UserRepository, userAuth authInterfaces.UserAuthHandler) {
 	user, err := userAuth.GetAuthUser(r, w)
@@ -263,6 +268,7 @@ func GetUserURLsResponse(w http.ResponseWriter, r *http.Request, repository inte
 	utils.LogErr(w.Write(jsonResp))
 }
 
+// GetDBStatusResponse returns database status.
 func GetDBStatusResponse(w http.ResponseWriter, databaseRepository interfaces.DatabaseRepository) {
 	context := context.Background()
 	conn, err := databaseRepository.Connect(context)
@@ -287,6 +293,7 @@ type ShotURLDelete struct {
 	Codes    []string
 }
 
+// GetDeleteShortURLResponse deletes array of short URLs by array of codes.
 func GetDeleteShortURLResponse(w http.ResponseWriter, r *http.Request, config config.Config, repository interfaces.ShotURLRepository,
 	userAuth authInterfaces.UserAuthHandler, jobCh chan ShotURLDelete) {
 	user, err := userAuth.GetAuthUser(r, w)
