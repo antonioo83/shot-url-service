@@ -10,7 +10,7 @@ import (
 )
 
 const UserCode = 1
-const ModelId = "1"
+const ModelID = "1"
 
 var pool *pgxpool.Pool
 var rep interfaces.ShotURLRepository
@@ -21,7 +21,7 @@ func BenchmarkMapStore(b *testing.B) {
 
 	b.Run("saveUrl", func(b *testing.B) {
 		urlModels := getRandomModels(UserCode, 1)
-		urlModels[0].Code = ModelId
+		urlModels[0].Code = ModelID
 		for i := 0; i < b.N; i++ {
 			rep.SaveURL(urlModels[0])
 		}
@@ -29,7 +29,7 @@ func BenchmarkMapStore(b *testing.B) {
 
 	b.Run("FindByCode", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			rep.FindByCode(ModelId)
+			rep.FindByCode(ModelID)
 		}
 	})
 
