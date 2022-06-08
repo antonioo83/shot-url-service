@@ -65,8 +65,6 @@ func GetConfigSettings() Config {
 		cfg.ServerAddress = serverAddress
 	}
 
-	cfg.DatabaseDsn = "postgres://postgres:433370@localhost:5433/postgres"
-
 	if cfg.BaseURL == "" {
 		cfg.BaseURL = baseURL
 	}
