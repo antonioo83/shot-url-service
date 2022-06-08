@@ -97,20 +97,3 @@ func ExampleGetCreateShortURLBatchRoute() {
 	//
 	// [{"correlation_id": "463186fc-72c8-4204-ae3c-48359c2f63bd","short_url": "http://localhost:8080/WhGuTjTu"}]
 }
-
-func ExampleGetDeleteShortURLRoute() {
-	r := chi.NewRouter()
-	p := RouteParameters{}
-	GetDeleteShortURLRoute(r, p.Config, p.ShotURLRepository, p.UserAuthHandler)
-
-	// Output:
-	// # Request
-	// DELETE http://localhost:8080/api/user/urls
-	// Content-Type: application/json
-	// Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
-	//
-	// ["WhGuTjTu"]
-	//
-	// # Response
-	// HTTP/1.1 202 OK
-}
