@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/antonioo83/shot-url-service/config"
 	authFactory "github.com/antonioo83/shot-url-service/internal/handlers/auth/factory"
 	"github.com/antonioo83/shot-url-service/internal/repositories/factory"
@@ -14,6 +15,12 @@ import (
 )
 import _ "net/http/pprof"
 
+var (
+	buildVersion string
+	buildDate    string
+	buildCommit  string
+)
+
 // Review: Кажется, что абстрактная фабрика здесь избытчна. Инициализация зависимостей будет происходить у нас по коду только в одном месте - при старте приложения,
 // где нам гораздое важнее прозрачность того, что у нас в итоге наинициализируется, нежели удобство интерфейса.
 // давай уберем все абстрактные фабрики из main
@@ -21,6 +28,10 @@ import _ "net/http/pprof"
 // Answer: factories are used here as well as in tests and benchmarks. I think this solution makes code more readable and understandable.
 // And I don't use duplicate code in other packages. But if it's important, I'll make it. Thank you for your remark!
 func main() {
+	fmt.Printf("Build version:%s\n", buildVersion)
+	fmt.Printf("Build date:%s\n", buildDate)
+	fmt.Printf("Build commit:%s\n", buildCommit)
+
 	config := config.GetConfigSettings()
 	var tokenAuth *jwtauth.JWTAuth
 	var pool *pgxpool.Pool
