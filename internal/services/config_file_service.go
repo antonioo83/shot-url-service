@@ -11,7 +11,7 @@ import (
 func LoadConfigFile(configFilePath string) (*config.Config, error) {
 	var configFromFile config.Config
 
-	file, err := os.OpenFile(configFilePath, os.O_RDWR|os.O_CREATE, 0777)
+	file, err := os.OpenFile(configFilePath, os.O_RDONLY, 0777)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open a configuration file: %w", err)
 	}

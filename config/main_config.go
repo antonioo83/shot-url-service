@@ -41,7 +41,7 @@ type DeleteShortURL struct {
 var cfg Config
 
 // GetConfigSettings returns configuration settings.
-func GetConfigSettings(configFromFile Config) Config {
+func GetConfigSettings(configFromFile *Config) Config {
 	const (
 		serverAddress       string = ":8080"
 		baseURL             string = ""
@@ -66,7 +66,7 @@ func GetConfigSettings(configFromFile Config) Config {
 	flag.StringVar(&cfg.ConfigFilePath, "c", cfg.ConfigFilePath, "Filename of the server configurations")
 	flag.Parse()
 
-	if cfg.ConfigFilePath != "" {
+	if configFromFile != nil {
 		if cfg.ServerAddress == "" {
 			cfg.ServerAddress = configFromFile.ServerAddress
 		}
@@ -82,7 +82,7 @@ func GetConfigSettings(configFromFile Config) Config {
 		if cfg.DatabaseDsn == "" {
 			cfg.DatabaseDsn = configFromFile.DatabaseDsn
 		}
-		if cfg.EnableHTTPS == false {
+		if !cfg.EnableHTTPS {
 			cfg.EnableHTTPS = configFromFile.EnableHTTPS
 		}
 	}

@@ -32,9 +32,9 @@ func main() {
 
 	configFromFile, err := services.LoadConfigFile("config.json")
 	if err != nil {
-		log.Fatal(err)
+		fmt.Errorf("i can't load cofiguration file %w", err)
 	}
-	config := config.GetConfigSettings(*configFromFile)
+	config := config.GetConfigSettings(configFromFile)
 
 	var tokenAuth *jwtauth.JWTAuth
 	var pool *pgxpool.Pool
@@ -83,7 +83,7 @@ func main() {
 	idleConnsClosed := make(chan struct{})
 	// канал для перенаправления прерываний
 	sigint := make(chan os.Signal, 1)
-	shutdownGracefully(ctx, srv, idleConnsClosed, sigint)
+	shutdownGracefully(ctx, &srv, idleConnsClosed, sigint)
 
 	// ждём завершения процедуры graceful shutdown.
 	<-idleConnsClosed
@@ -92,7 +92,7 @@ func main() {
 	srv.Shutdown(ctx)
 }
 
-func shutdownGracefully(ctx context.Context, srv http.Server, idleConnsClosed chan struct{}, sigint chan os.Signal) {
+func shutdownGracefully(ctx context.Context, srv *http.Server, idleConnsClosed chan struct{}, sigint chan os.Signal) {
 	signal.Notify(sigint, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 	go func() {
 		<-sigint

@@ -2,9 +2,11 @@ package database
 
 import (
 	"context"
+	"fmt"
 	"github.com/antonioo83/shot-url-service/config"
 	"github.com/antonioo83/shot-url-service/internal/models"
 	"github.com/antonioo83/shot-url-service/internal/repositories/interfaces"
+	"github.com/antonioo83/shot-url-service/internal/services"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"strconv"
 	"testing"
@@ -18,7 +20,11 @@ var pool *pgxpool.Pool
 var rep interfaces.ShotURLRepository
 
 func BenchmarkQueries(b *testing.B) {
-	config := config.GetConfigSettings()
+	configFromFile, err := services.LoadConfigFile("config.json")
+	if err != nil {
+		fmt.Errorf("i can't load cofiguration file %w", err)
+	}
+	config := config.GetConfigSettings(configFromFile)
 	context := context.Background()
 	pool, _ = pgxpool.Connect(context, config.DatabaseDsn)
 	defer pool.Close()

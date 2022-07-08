@@ -2,10 +2,12 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"github.com/antonioo83/shot-url-service/config"
 	"github.com/antonioo83/shot-url-service/internal/handlers"
 	authFactory "github.com/antonioo83/shot-url-service/internal/handlers/auth/factory"
 	"github.com/antonioo83/shot-url-service/internal/repositories/factory"
+	"github.com/antonioo83/shot-url-service/internal/services"
 	"github.com/antonioo83/shot-url-service/internal/utils"
 	"github.com/go-chi/jwtauth"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -47,7 +49,11 @@ func TestGetRouters(t *testing.T) {
 	var tokenAuth *jwtauth.JWTAuth
 	var pool *pgxpool.Pool
 	context := context.Background()
-	config := config.GetConfigSettings()
+	configFromFile, err := services.LoadConfigFile("config.json")
+	if err != nil {
+		fmt.Errorf("i can't load cofiguration file %w", err)
+	}
+	config := config.GetConfigSettings(configFromFile)
 	if config.IsUseDatabase {
 		pool, _ := pgxpool.Connect(context, config.DatabaseDsn) //databaseRepository.Connect(context)
 		defer pool.Close()
