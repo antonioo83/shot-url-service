@@ -10,14 +10,16 @@ import (
 
 // Config Configuration settings.
 type Config struct {
-	ServerAddress       string         `env:"SERVER_ADDRESS"`         // The address of the local server.
-	BaseURL             string         `env:"BASE_URL"`               // Base address of the result short url
-	FileStoragePath     string         `env:"FILE_STORAGE_PATH"`      // Filepath to the shot url file storage.
-	UserFileStoragePath string         `env:"USER_FILE_STORAGE_PATH"` // Filepath to the user file storage.
+	ServerAddress       string         `env:"SERVER_ADDRESS" json:"server_address,omitempty"`                 // The address of the local server.
+	BaseURL             string         `env:"BASE_URL" json:"base_url,omitempty"`                             // Base address of the result short url
+	FileStoragePath     string         `env:"FILE_STORAGE_PATH" json:"file_storage_path,omitempty"`           // Filepath to the shot url file storage.
+	UserFileStoragePath string         `env:"USER_FILE_STORAGE_PATH" json:"user_file_storage_path,omitempty"` // Filepath to the user file storage.
 	IsUseFileStore      bool           // Is use file store ?
-	DatabaseDsn         string         `env:"DATABASE_DSN"` // Database connection string.
+	DatabaseDsn         string         `env:"DATABASE_DSN" json:"database_dsn,omitempty"` // Database connection string.
 	IsUseDatabase       bool           // Is use database ?
 	FilepathToDBDump    string         // Filepath to the SQL dump for initialization database.
+	EnableHTTPS         bool           `env:"ENABLE_HTTPS" json:"enable_https,omitempty"` // Enable HTTPS connection.
+	ConfigFilePath      string         `env:"CONFIG" json:"config_file_path,omitempty"`   // Filename of the server configurations.
 	Auth                Auth           // User Authorization settings
 	DeleteShotURL       DeleteShortURL // Settings of deleting short url rows from database
 }
@@ -39,7 +41,7 @@ type DeleteShortURL struct {
 var cfg Config
 
 // GetConfigSettings returns configuration settings.
-func GetConfigSettings() Config {
+func GetConfigSettings(configFromFile Config) Config {
 	const (
 		serverAddress       string = ":8080"
 		baseURL             string = ""
@@ -60,7 +62,31 @@ func GetConfigSettings() Config {
 	flag.StringVar(&cfg.FileStoragePath, "f", cfg.FileStoragePath, "Filepath to the file storage")
 	flag.StringVar(&cfg.UserFileStoragePath, "fu", cfg.UserFileStoragePath, "Filepath to the user file storage")
 	flag.StringVar(&cfg.DatabaseDsn, "d", cfg.DatabaseDsn, "Database port")
+	flag.BoolVar(&cfg.EnableHTTPS, "s", cfg.EnableHTTPS, "Enable HTTPS connection")
+	flag.StringVar(&cfg.ConfigFilePath, "c", cfg.ConfigFilePath, "Filename of the server configurations")
 	flag.Parse()
+
+	if cfg.ConfigFilePath != "" {
+		if cfg.ServerAddress == "" {
+			cfg.ServerAddress = configFromFile.ServerAddress
+		}
+		if cfg.BaseURL == "" {
+			cfg.BaseURL = configFromFile.BaseURL
+		}
+		if cfg.FileStoragePath == "" {
+			cfg.FileStoragePath = configFromFile.FileStoragePath
+		}
+		if cfg.UserFileStoragePath == "" {
+			cfg.UserFileStoragePath = configFromFile.UserFileStoragePath
+		}
+		if cfg.DatabaseDsn == "" {
+			cfg.DatabaseDsn = configFromFile.DatabaseDsn
+		}
+		if cfg.EnableHTTPS == false {
+			cfg.EnableHTTPS = configFromFile.EnableHTTPS
+		}
+	}
+
 	if cfg.ServerAddress == "" {
 		cfg.ServerAddress = serverAddress
 	}
@@ -79,11 +105,7 @@ func GetConfigSettings() Config {
 	cfg.IsUseDatabase = true
 	if cfg.DatabaseDsn == "" {
 		cfg.IsUseDatabase = false
-	} //else {
-	// GitHub test environment doesn't understand sql dump as file.
-	//cfg.FilepathToDBDump, _ = os.Getwd()
-	//cfg.FilepathToDBDump += "\\migrations\\create_tables.sql"
-	//}
+	}
 
 	cfg.Auth.Alg = authEncodeAlgorithm
 	cfg.Auth.CookieTTL = authRememberMeTime

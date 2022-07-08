@@ -20,6 +20,7 @@ func GetShortURL(originalURL string, r *http.Request, newBaseURL string) (string
 	return newBaseURL + "/" + urlID, urlID, err
 }
 
+//Review ! rktkov: Может спрятать реализацию кодирования тоже за интерфейс и в отдельный пакет вынести?
 func generateShortLink(initialLink string, userID string) (string, error) {
 	urlHashBytes := sha256Of(initialLink + userID)
 	generatedNumber := new(big.Int).SetBytes(urlHashBytes).Uint64()
