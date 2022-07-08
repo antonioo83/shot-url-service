@@ -22,7 +22,7 @@ var rep interfaces.ShotURLRepository
 func BenchmarkQueries(b *testing.B) {
 	configFromFile, err := services.LoadConfigFile("config.json")
 	if err != nil {
-		fmt.Errorf("i can't load cofiguration file %w", err)
+		fmt.Println("i can't load configuration file:" + err.Error())
 	}
 	config := config.GetConfigSettings(configFromFile)
 	context := context.Background()
