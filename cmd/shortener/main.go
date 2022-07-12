@@ -63,6 +63,10 @@ func main() {
 
 	var srv = http.Server{Addr: config.ServerAddress, Handler: handler}
 	if config.EnableHTTPS {
+		//REVIEW ! rktkov:В принципе, всю реализацию создания файлов сертификатор можно было бы спрятать внутри службы,
+		//и сделать только один метод возвращающий 2 массива байт для записи в результирующие файлы.
+		//REVIEW Answer ! anton: Yes it is. I understand you and I made it before but I didn't like this implementation. Because this function runs more then one operation.
+		// In addition function with "GenerateCertificateAndPrivateKey" name doesn't readable because don't understandable which attribute is certificate and which attribute is private key.
 		c := services.NewServerCertificate509Service(1658, "Yandex.Praktikum", "RU")
 		template := c.CreateTemplate()
 		key, _ := c.GenerateKey(4096)

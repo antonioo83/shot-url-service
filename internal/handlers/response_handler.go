@@ -101,7 +101,6 @@ func GetCreateShortURLBatchResponse(w http.ResponseWriter, r *http.Request, conf
 		return
 	}
 
-	//I couldn't move function to service/app package because golang was getting an error with message: import cycle not allowed. I need consultation.
 	getSavedShortURLResponse(savedShortURLParameters{
 		w,
 		r,
