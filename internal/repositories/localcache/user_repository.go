@@ -14,7 +14,6 @@ func NewMemoryUserRepository(m map[int]models.User) interfaces.UserRepository {
 	return &memoryUserRepository{m}
 }
 
-//Review ! rktkov: Я бы продолжил хорошую практику комментирования открытого интерфейса пакета. Или хотя бы прокомментировал методы самого интерфейса.
 func (m *memoryUserRepository) Save(model models.User) error {
 	m.buffer[model.Code] = model
 
