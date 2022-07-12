@@ -53,10 +53,13 @@ func (s serverCertificateService) CreateTemplate() *x509.Certificate {
 //GeneratePrivateKey generate new private key.
 func (s serverCertificateService) GeneratePrivateKey(privateKey *rsa.PrivateKey) (bytes.Buffer, error) {
 	var privateKeyPEM bytes.Buffer
-	pem.Encode(&privateKeyPEM, &pem.Block{
+	err := pem.Encode(&privateKeyPEM, &pem.Block{
 		Type:  "RSA PRIVATE KEY",
 		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
 	})
+	if err != nil {
+		return privateKeyPEM, fmt.Errorf("can't generate private key: %w", err)
+	}
 
 	return privateKeyPEM, nil
 }
@@ -77,7 +80,7 @@ func (s serverCertificateService) GenerateCertificate(cert *x509.Certificate, pr
 	// создаём сертификат x.509
 	certBytes, err := x509.CreateCertificate(rand.Reader, cert, cert, &privateKey.PublicKey, privateKey)
 	if err != nil {
-		return certPEM, fmt.Errorf("i can't certificate: %w", err)
+		return certPEM, fmt.Errorf("i can't create a certificate: %w", err)
 	}
 
 	pem.Encode(&certPEM, &pem.Block{
