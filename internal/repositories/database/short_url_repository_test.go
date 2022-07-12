@@ -6,7 +6,6 @@ import (
 	"github.com/antonioo83/shot-url-service/config"
 	"github.com/antonioo83/shot-url-service/internal/models"
 	"github.com/antonioo83/shot-url-service/internal/repositories/interfaces"
-	"github.com/antonioo83/shot-url-service/internal/services"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"strconv"
 	"testing"
@@ -20,7 +19,7 @@ var pool *pgxpool.Pool
 var rep interfaces.ShotURLRepository
 
 func BenchmarkQueries(b *testing.B) {
-	configFromFile, err := services.LoadConfigFile("config.json")
+	configFromFile, err := config.LoadConfigFile("config.json")
 	if err != nil {
 		fmt.Println("i can't load configuration file:" + err.Error())
 	}

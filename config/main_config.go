@@ -2,9 +2,12 @@
 package config
 
 import (
+	"encoding/json"
 	"flag"
+	"fmt"
 	"github.com/caarlos0/env/v6"
 	"log"
+	"os"
 	"time"
 )
 
@@ -116,4 +119,34 @@ func GetConfigSettings(configFromFile *Config) Config {
 	cfg.DeleteShotURL.WorkersCount = 1
 
 	return cfg
+}
+
+// LoadConfigFile this method read a server configurations from a file in the json format.
+func LoadConfigFile(configFilePath string) (*Config, error) {
+	var configFromFile Config
+
+	file, err := os.OpenFile(configFilePath, os.O_RDONLY, 0777)
+	if err != nil {
+		return nil, fmt.Errorf("unable to open a configuration file: %w", err)
+	}
+	defer file.Close()
+
+	info, err := file.Stat()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get statistic info about configuration file: %w", err)
+	}
+	filesize := info.Size()
+	jsonConfig := make([]byte, filesize)
+
+	_, err = file.Read(jsonConfig)
+	if err != nil {
+		return nil, fmt.Errorf("i can't read a configuration file: %w", err)
+	}
+
+	err = json.Unmarshal(jsonConfig, &configFromFile)
+	if err != nil {
+		return nil, fmt.Errorf("i can't parse a configuration json file: %w", err)
+	}
+
+	return &configFromFile, nil
 }

@@ -7,7 +7,6 @@ import (
 	"github.com/antonioo83/shot-url-service/internal/handlers"
 	authFactory "github.com/antonioo83/shot-url-service/internal/handlers/auth/factory"
 	"github.com/antonioo83/shot-url-service/internal/repositories/factory"
-	"github.com/antonioo83/shot-url-service/internal/services"
 	"github.com/antonioo83/shot-url-service/internal/utils"
 	"github.com/go-chi/jwtauth"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -49,7 +48,7 @@ func TestGetRouters(t *testing.T) {
 	var tokenAuth *jwtauth.JWTAuth
 	var pool *pgxpool.Pool
 	context := context.Background()
-	configFromFile, err := services.LoadConfigFile("config.json")
+	configFromFile, err := config.LoadConfigFile("config.json")
 	if err != nil {
 		fmt.Println("i can't load configuration file:" + err.Error())
 	}

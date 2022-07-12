@@ -30,7 +30,7 @@ func main() {
 	fmt.Printf("Build date:%s\n", buildDate)
 	fmt.Printf("Build commit:%s\n", buildCommit)
 
-	configFromFile, err := services.LoadConfigFile("config.json")
+	configFromFile, err := config.LoadConfigFile("config.json")
 	if err != nil {
 		fmt.Println("i can't load configuration file:" + err.Error())
 	}
