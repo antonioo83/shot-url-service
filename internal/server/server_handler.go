@@ -6,6 +6,7 @@ import (
 	"github.com/antonioo83/shot-url-service/config"
 	"github.com/antonioo83/shot-url-service/internal/handlers"
 	authInterfaces "github.com/antonioo83/shot-url-service/internal/handlers/auth/interfaces"
+	genInterfaces "github.com/antonioo83/shot-url-service/internal/handlers/generators/interfaces"
 	"github.com/antonioo83/shot-url-service/internal/repositories/interfaces"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -20,6 +21,7 @@ type RouteParameters struct {
 	UserRepository     interfaces.UserRepository
 	DatabaseRepository interfaces.DatabaseRepository
 	UserAuthHandler    authInterfaces.UserAuthHandler
+	Generator          genInterfaces.ShortLinkGenerator
 }
 
 // GetRouters Returns all available routers.
@@ -33,12 +35,12 @@ func GetRouters(p RouteParameters) *chi.Mux {
 	compressor := middleware.NewCompressor(flate.DefaultCompression)
 	r.Use(compressor.Handler)
 
-	r = GetCreateShortURLRoute(r, p.Config, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler)
-	r = GetCreateJSONShortURLRoute(r, p.Config, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler)
+	r = GetCreateShortURLRoute(r, p.Config, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler, p.Generator)
+	r = GetCreateJSONShortURLRoute(r, p.Config, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler, p.Generator)
 	r = GetOriginalURLRoute(r, p.ShotURLRepository)
 	r = GetUserUrlsRoute(r, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler)
 	r = GetDatabaseStatus(r, p.DatabaseRepository)
-	r = GetCreateShortURLBatchRoute(r, p.Config, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler)
+	r = GetCreateShortURLBatchRoute(r, p.Config, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler, p.Generator)
 	r = GetDeleteShortURLRoute(r, p.Config, p.ShotURLRepository, p.UserAuthHandler)
 	r.HandleFunc("/debug/pprof/", pprof.Index)
 	r.HandleFunc("/debug/pprof/allocs", pprof.Index)
@@ -59,9 +61,9 @@ func GetRouters(p RouteParameters) *chi.Mux {
 //
 // POST http://localhost:8080/
 func GetCreateShortURLRoute(r *chi.Mux, config config.Config, repository interfaces.ShotURLRepository, userRepository interfaces.UserRepository,
-	userAuthHandler authInterfaces.UserAuthHandler) *chi.Mux {
+	userAuthHandler authInterfaces.UserAuthHandler, generator genInterfaces.ShortLinkGenerator) *chi.Mux {
 	r.Post("/", func(w http.ResponseWriter, r *http.Request) {
-		handlers.GetCreateShortURLResponse(w, r, config, repository, userRepository, userAuthHandler)
+		handlers.GetCreateShortURLResponse(w, r, config, repository, userRepository, userAuthHandler, generator)
 	})
 
 	return r
@@ -71,9 +73,9 @@ func GetCreateShortURLRoute(r *chi.Mux, config config.Config, repository interfa
 //
 // POST http://localhost:8080/api/shorten
 func GetCreateJSONShortURLRoute(r *chi.Mux, config config.Config, repository interfaces.ShotURLRepository, userRepository interfaces.UserRepository,
-	userAuthHandler authInterfaces.UserAuthHandler) *chi.Mux {
+	userAuthHandler authInterfaces.UserAuthHandler, generator genInterfaces.ShortLinkGenerator) *chi.Mux {
 	r.Post("/api/shorten", func(w http.ResponseWriter, r *http.Request) {
-		handlers.GetCreateJSONShortURLResponse(w, r, config, repository, userRepository, userAuthHandler)
+		handlers.GetCreateJSONShortURLResponse(w, r, config, repository, userRepository, userAuthHandler, generator)
 	})
 
 	return r
@@ -117,9 +119,9 @@ func GetDatabaseStatus(r *chi.Mux, databaseRepository interfaces.DatabaseReposit
 //
 // POST http://localhost:8080/api/shorten/batch
 func GetCreateShortURLBatchRoute(r *chi.Mux, config config.Config, repository interfaces.ShotURLRepository, userRepository interfaces.UserRepository,
-	userAuthHandler authInterfaces.UserAuthHandler) *chi.Mux {
+	userAuthHandler authInterfaces.UserAuthHandler, generator genInterfaces.ShortLinkGenerator) *chi.Mux {
 	r.Post("/api/shorten/batch", func(w http.ResponseWriter, r *http.Request) {
-		handlers.GetCreateShortURLBatchResponse(w, r, config, repository, userRepository, userAuthHandler)
+		handlers.GetCreateShortURLBatchResponse(w, r, config, repository, userRepository, userAuthHandler, generator)
 	})
 
 	return r

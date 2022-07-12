@@ -7,7 +7,7 @@ import (
 func ExampleGetCreateShortURLRoute() {
 	r := chi.NewRouter()
 	p := RouteParameters{}
-	r = GetCreateShortURLRoute(r, p.Config, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler)
+	r = GetCreateShortURLRoute(r, p.Config, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler, p.Generator)
 	// Output (parallel):
 	// # Request
 	// POST http://localhost:8080/
@@ -25,7 +25,7 @@ func ExampleGetCreateShortURLRoute() {
 func ExampleGetCreateJSONShortURLRoute() {
 	r := chi.NewRouter()
 	p := RouteParameters{}
-	r = GetCreateJSONShortURLRoute(r, p.Config, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler)
+	r = GetCreateJSONShortURLRoute(r, p.Config, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler, p.Generator)
 	// Output (parallel):
 	// # Request
 	// POST http://localhost:8080/api/shorten
@@ -83,7 +83,7 @@ func ExampleGetDatabaseStatus() {
 func ExampleGetCreateShortURLBatchRoute() {
 	r := chi.NewRouter()
 	p := RouteParameters{}
-	r = GetCreateShortURLBatchRoute(r, p.Config, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler)
+	r = GetCreateShortURLBatchRoute(r, p.Config, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler, p.Generator)
 	// Output (parallel):
 	// # Request
 	// POST http://localhost:8080/api/shorten/batch

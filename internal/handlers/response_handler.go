@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/antonioo83/shot-url-service/config"
 	authInterfaces "github.com/antonioo83/shot-url-service/internal/handlers/auth/interfaces"
+	genInterfaces "github.com/antonioo83/shot-url-service/internal/handlers/generators/interfaces"
 	"github.com/antonioo83/shot-url-service/internal/models"
 	"github.com/antonioo83/shot-url-service/internal/repositories/interfaces"
 	"github.com/antonioo83/shot-url-service/internal/utils"
@@ -22,7 +23,7 @@ type shortURLResponse struct {
 
 // GetCreateJSONShortURLResponse creates a short URL by json request in the storage and returns the response.
 func GetCreateJSONShortURLResponse(w http.ResponseWriter, r *http.Request, config config.Config, repository interfaces.ShotURLRepository,
-	userRepository interfaces.UserRepository, userAuth authInterfaces.UserAuthHandler) {
+	userRepository interfaces.UserRepository, userAuth authInterfaces.UserAuthHandler, generator genInterfaces.ShortLinkGenerator) {
 	createShortURL, err := GetOriginalURLFromBody(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -38,6 +39,7 @@ func GetCreateJSONShortURLResponse(w http.ResponseWriter, r *http.Request, confi
 		repository,
 		userRepository,
 		userAuth,
+		generator,
 		&createShortURLs,
 		func(w http.ResponseWriter, shotURLResponses []shortURLResponse, httpStatus int) {
 			w.Header().Add("Content-Type", "application/json")
@@ -65,7 +67,7 @@ func getJSONResponse(key string, value string) ([]byte, error) {
 
 // GetCreateShortURLResponse creates a short URL in the storage and returns the response.
 func GetCreateShortURLResponse(w http.ResponseWriter, r *http.Request, config config.Config, repository interfaces.ShotURLRepository,
-	userRepository interfaces.UserRepository, userAuth authInterfaces.UserAuthHandler) {
+	userRepository interfaces.UserRepository, userAuth authInterfaces.UserAuthHandler, generator genInterfaces.ShortLinkGenerator) {
 	createShortURL, err := GetBody(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -81,6 +83,7 @@ func GetCreateShortURLResponse(w http.ResponseWriter, r *http.Request, config co
 		repository,
 		userRepository,
 		userAuth,
+		generator,
 		&createShortURLs,
 		func(w http.ResponseWriter, shotURLResponses []shortURLResponse, httpStatus int) {
 			w.WriteHeader(httpStatus)
@@ -91,7 +94,7 @@ func GetCreateShortURLResponse(w http.ResponseWriter, r *http.Request, config co
 
 // GetCreateShortURLBatchResponse creates a array of short URLs in the storage and returns the response.
 func GetCreateShortURLBatchResponse(w http.ResponseWriter, r *http.Request, config config.Config, repository interfaces.ShotURLRepository,
-	userRepository interfaces.UserRepository, userAuth authInterfaces.UserAuthHandler) {
+	userRepository interfaces.UserRepository, userAuth authInterfaces.UserAuthHandler, generator genInterfaces.ShortLinkGenerator) {
 	createShortURLs, err := GetBatchRequestsFromBody(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -106,6 +109,7 @@ func GetCreateShortURLBatchResponse(w http.ResponseWriter, r *http.Request, conf
 		repository,
 		userRepository,
 		userAuth,
+		generator,
 		createShortURLs,
 		func(w http.ResponseWriter, shotURLResponses []shortURLResponse, httpStatus int) {
 			w.Header().Add("Content-Type", "application/json")
@@ -136,6 +140,7 @@ type savedShortURLParameters struct {
 	repository      interfaces.ShotURLRepository
 	userRepository  interfaces.UserRepository
 	userAuth        authInterfaces.UserAuthHandler
+	generator       genInterfaces.ShortLinkGenerator
 	createShortURLs *[]CreateShortURL
 	responseFunc    func(w http.ResponseWriter, shotURLResponses []shortURLResponse, httpStatus int)
 }
@@ -150,7 +155,7 @@ func getSavedShortURLResponse(p savedShortURLParameters) {
 
 	var shortURLModels []models.ShortURL
 	for _, createShortURL := range *p.createShortURLs {
-		shotURL, code, err := GetShortURL(createShortURL.OriginalURL, p.request, p.config.BaseURL)
+		shotURL, code, err := p.generator.GetShortURL(createShortURL.OriginalURL, p.request, p.config.BaseURL)
 		if err != nil {
 			http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
 			return

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/antonioo83/shot-url-service/config"
 	authFactory "github.com/antonioo83/shot-url-service/internal/handlers/auth/factory"
+	"github.com/antonioo83/shot-url-service/internal/handlers/generators"
 	"github.com/antonioo83/shot-url-service/internal/repositories/factory"
 	"github.com/antonioo83/shot-url-service/internal/repositories/interfaces"
 	"github.com/antonioo83/shot-url-service/internal/server"
@@ -56,6 +57,7 @@ func main() {
 			UserRepository:     userRepository,
 			DatabaseRepository: databaseRepository,
 			UserAuthHandler:    authFactory.NewAuthHandler(tokenAuth, userRepository, config),
+			Generator:          generators.NewShortLinkDefaultGenerator(),
 		}
 	handler := server.GetRouters(routeParameters)
 

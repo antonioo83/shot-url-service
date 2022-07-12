@@ -6,6 +6,7 @@ import (
 	"github.com/antonioo83/shot-url-service/config"
 	"github.com/antonioo83/shot-url-service/internal/handlers"
 	authFactory "github.com/antonioo83/shot-url-service/internal/handlers/auth/factory"
+	"github.com/antonioo83/shot-url-service/internal/handlers/generators"
 	"github.com/antonioo83/shot-url-service/internal/repositories/factory"
 	"github.com/antonioo83/shot-url-service/internal/utils"
 	"github.com/go-chi/jwtauth"
@@ -65,6 +66,7 @@ func TestGetRouters(t *testing.T) {
 		UserRepository:     userRepository,
 		DatabaseRepository: factory.GetDatabaseRepository(config),
 		UserAuthHandler:    authFactory.NewAuthHandler(tokenAuth, userRepository, config),
+		Generator:          generators.NewShortLinkDefaultGenerator(),
 	})
 	ts := httptest.NewServer(r)
 	defer ts.Close()
