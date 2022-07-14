@@ -154,7 +154,7 @@ func getSavedShortURLResponse(p savedShortURLParameters) {
 
 	var shortURLModels []models.ShortURL
 	for _, createShortURL := range *p.createShortURLs {
-		shotURL, code, err := p.generator.GetShortURL(createShortURL.OriginalURL, p.request, p.config.BaseURL)
+		shotURL, code, err := p.generator.GetShortURL(createShortURL.OriginalURL, p.request.Host, p.config.BaseURL)
 		if err != nil {
 			http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
 			return

@@ -8,7 +8,6 @@ import (
 	"github.com/antonioo83/shot-url-service/internal/utils"
 	"github.com/itchyny/base58-go"
 	"math/big"
-	"net/http"
 )
 
 type shortLinkGenerator struct {
@@ -20,11 +19,11 @@ func NewShortLinkDefaultGenerator() interfaces2.ShortLinkGenerator {
 }
 
 // GetShortURL returns generated short URL.
-func (a shortLinkGenerator) GetShortURL(originalURL string, r *http.Request, newBaseURL string) (string, string, error) {
+func (a shortLinkGenerator) GetShortURL(originalURL string, host string, newBaseURL string) (string, string, error) {
 	urlID, err := a.generateShortLink(originalURL, "userId")
 
 	if newBaseURL == "" {
-		return "http://" + r.Host + "/" + urlID, urlID, err
+		return "http://" + host + "/" + urlID, urlID, err
 	}
 
 	return newBaseURL + "/" + urlID, urlID, err
