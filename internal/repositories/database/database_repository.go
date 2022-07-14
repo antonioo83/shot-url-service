@@ -16,6 +16,7 @@ func NewDatabaseRepository(connString string) interfaces.DatabaseRepository {
 	return &databaseRepository{connString}
 }
 
+//Connect connects to the database.
 func (r databaseRepository) Connect(context context.Context) (*pgx.Conn, error) {
 	conn, err := pgx.Connect(context, r.connString)
 	if err != nil {
@@ -25,10 +26,12 @@ func (r databaseRepository) Connect(context context.Context) (*pgx.Conn, error) 
 	return conn, nil
 }
 
+//Disconnect disconnects from the database.
 func (r databaseRepository) Disconnect(context context.Context, conn *pgx.Conn) {
 	defer conn.Close(context)
 }
 
+//RunDump runs a sql dump by the filepath.
 func (r databaseRepository) RunDump(context context.Context, conn *pgxpool.Pool, filepath string) error {
 	sqlDump := "CREATE TABLE IF NOT EXISTS short_url (\n    id serial NOT NULL PRIMARY KEY,\n    user_code integer NOT NULL,\n    correlation_id character varying(50) NOT NULL,\n    code character varying(50) NOT NULL,\n    original_url character varying(500) NOT NULL,\n    short_url character varying(500) NOT NULL,\n    active boolean DEFAULT true,\n    CONSTRAINT \"shortUrl\" UNIQUE (short_url)\n);\nCREATE TABLE IF NOT EXISTS users (\n    id serial NOT NULL PRIMARY KEY,\n    code integer NOT NULL,\n    uid character varying(500) NOT NULL\n);"
 	_, err := conn.Exec(context, sqlDump)

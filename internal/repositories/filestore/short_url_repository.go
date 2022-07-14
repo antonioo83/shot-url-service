@@ -16,6 +16,7 @@ func NewFileRepository(filename string) interfaces.ShotURLRepository {
 	return &fileRepository{filename}
 }
 
+//SaveURL saves an entity in the storage.
 func (r fileRepository) SaveURL(model models.ShortURL) error {
 	producer, err := GetProducer(r.filename)
 	if err != nil {
@@ -30,6 +31,7 @@ func (r fileRepository) SaveURL(model models.ShortURL) error {
 	return nil
 }
 
+//SaveModels saves batch of entities in the storage.
 func (r *fileRepository) SaveModels(models []models.ShortURL) error {
 	producer, err := GetProducer(r.filename)
 	if err != nil {
@@ -47,6 +49,7 @@ func (r *fileRepository) SaveModels(models []models.ShortURL) error {
 	return nil
 }
 
+//FindByCode finds an entity in the storage by unique code.
 func (r fileRepository) FindByCode(code string) (*models.ShortURL, error) {
 	model := models.ShortURL{}
 	consumer, err := GetConsumer(r.filename)
@@ -75,6 +78,7 @@ func (r fileRepository) FindByCode(code string) (*models.ShortURL, error) {
 	return nil, nil
 }
 
+//FindAllByUserCode finds entities in the storage by unique codes.
 func (r fileRepository) FindAllByUserCode(userCode int) (*map[string]models.ShortURL, error) {
 	var model = models.ShortURL{}
 	var models = make(map[string]models.ShortURL)
@@ -104,12 +108,14 @@ func (r fileRepository) FindAllByUserCode(userCode int) (*map[string]models.Shor
 	return &models, nil
 }
 
+//IsInDatabase check exists an entity in the storage by unique code.
 func (r fileRepository) IsInDatabase(code string) (bool, error) {
 	model, err := r.FindByCode(code)
 
 	return !(model == nil), err
 }
 
+//Delete deletes entities of a user from the storage by user code.
 func (r fileRepository) Delete(userCode int, codes []string) error {
 
 	return fmt.Errorf("method wasn't implemented")

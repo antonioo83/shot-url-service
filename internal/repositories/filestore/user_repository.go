@@ -16,6 +16,7 @@ func NewUserRepository(filename string) interfaces.UserRepository {
 	return &userRepository{filename}
 }
 
+//Save saves a user in the storage.
 func (r userRepository) Save(model models.User) error {
 	producer, err := GetProducer(r.filename)
 	if err != nil {
@@ -30,6 +31,7 @@ func (r userRepository) Save(model models.User) error {
 	return nil
 }
 
+//FindByCode finds a user in the storage by unique code.
 func (r userRepository) FindByCode(code int) (*models.User, error) {
 	model := models.User{}
 	consumer, err := GetConsumer(r.filename)
@@ -58,6 +60,7 @@ func (r userRepository) FindByCode(code int) (*models.User, error) {
 	return nil, nil
 }
 
+//GetLastModel gets a last user from the storage.
 func (r userRepository) GetLastModel() (*models.User, error) {
 	model := models.User{}
 	consumer, err := GetConsumer(r.filename)
@@ -83,6 +86,7 @@ func (r userRepository) GetLastModel() (*models.User, error) {
 	return &model, nil
 }
 
+//IsInDatabase check exists a user in the storage by unique code.
 func (r userRepository) IsInDatabase(code int) (bool, error) {
 	model, err := r.FindByCode(code)
 

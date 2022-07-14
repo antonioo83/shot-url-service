@@ -18,6 +18,7 @@ func NewShortURLRepository(context context.Context, pool *pgxpool.Pool) interfac
 	return &shortURLRepository{context, pool}
 }
 
+//SaveURL saves an entity in the storage.
 func (s shortURLRepository) SaveURL(model models.ShortURL) error {
 	_, err := s.connection.Exec(
 		s.context,
@@ -31,6 +32,7 @@ func (s shortURLRepository) SaveURL(model models.ShortURL) error {
 	return nil
 }
 
+//SaveModels saves batch of entities in the storage.
 func (s shortURLRepository) SaveModels(models []models.ShortURL) error {
 	tx, err := s.connection.BeginTx(s.context, pgx.TxOptions{})
 	if err != nil {
@@ -58,6 +60,7 @@ func (s shortURLRepository) SaveModels(models []models.ShortURL) error {
 	return nil
 }
 
+//FindByCode finds an entity in the storage by unique code.
 func (s shortURLRepository) FindByCode(code string) (*models.ShortURL, error) {
 	var model models.ShortURL
 	row := s.connection.QueryRow(s.context, "SELECT correlation_id, user_code, code, original_url, short_url, active FROM short_url WHERE code=$1", code)
@@ -71,6 +74,7 @@ func (s shortURLRepository) FindByCode(code string) (*models.ShortURL, error) {
 	return &model, nil
 }
 
+//FindAllByUserCode finds entities in the storage by unique codes.
 func (s shortURLRepository) FindAllByUserCode(userCode int) (*map[string]models.ShortURL, error) {
 	var model = models.ShortURL{}
 	models := make(map[string]models.ShortURL)
@@ -89,12 +93,14 @@ func (s shortURLRepository) FindAllByUserCode(userCode int) (*map[string]models.
 	return &models, nil
 }
 
+//IsInDatabase check exists an entity in the storage by unique code.
 func (s shortURLRepository) IsInDatabase(code string) (bool, error) {
 	model, err := s.FindByCode(code)
 
 	return !(model == nil), err
 }
 
+//Delete deletes entities of a user from the storage by user code.
 func (s shortURLRepository) Delete(userCode int, codes []string) error {
 	batch := &pgx.Batch{}
 	for _, code := range codes {
