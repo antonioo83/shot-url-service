@@ -13,9 +13,9 @@ func SaveToFile(fileName string, data []byte) error {
 	}
 	defer utils.ResourceClose(file)
 
-	_, err = file.Write(data)
+	err = utils.LogErr(file.Write(data))
 	if err != nil {
-		return fmt.Errorf("i can't write data to  a file: %w", err)
+		return fmt.Errorf("i can't write to file: %w", err)
 	}
 
 	return nil

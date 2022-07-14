@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
+	"github.com/antonioo83/shot-url-service/internal/utils"
 	"io"
 	"net/http"
 )
@@ -28,7 +29,7 @@ func uncompress(r *http.Request) ([]byte, error) {
 			return []byte(""), err
 		}
 		reader = gz
-		defer gz.Close()
+		defer utils.ResourceClose(gz)
 	} else {
 		reader = r.Body
 	}

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/antonioo83/shot-url-service/internal/utils"
 	"github.com/caarlos0/env/v6"
 	"log"
 	"os"
@@ -129,7 +130,7 @@ func LoadConfigFile(configFilePath string) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to open a configuration file: %w", err)
 	}
-	defer file.Close()
+	defer utils.ResourceClose(file)
 
 	info, err := file.Stat()
 	if err != nil {

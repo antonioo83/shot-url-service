@@ -5,19 +5,19 @@ import (
 	"log"
 )
 
-//Review ! rktkov: Зачем создан этот пакет, если в большинстве мест, где осуществляется логгирование, используется базовый пакет log.
-//Либо надо удалять этот пакет, либо оборачивать до конца использование пакета log и вызывать методы этого пакете во всем коде.
-//Review Answer ! anton: I use this package because this implementation was recommended another mentor.
-func LogErr(n int, err error) int {
+func LogErr(n int, err error) error {
 	if err != nil {
-		log.Printf("Write failed: %v", err)
+		log.Printf("Write failed %d byte: %v", n, err)
 	}
 
-	return n
+	return err
 }
 
-func ResourceClose(body io.ReadCloser) {
+func ResourceClose(body io.ReadCloser) error {
 	if err := body.Close(); err != nil {
 		log.Printf("Can't close resource: %v", err)
+		return err
 	}
+
+	return nil
 }

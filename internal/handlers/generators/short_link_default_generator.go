@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	interfaces2 "github.com/antonioo83/shot-url-service/internal/handlers/generators/interfaces"
+	"github.com/antonioo83/shot-url-service/internal/utils"
 	"github.com/itchyny/base58-go"
 	"math/big"
 	"net/http"
@@ -39,7 +40,7 @@ func (a shortLinkGenerator) generateShortLink(initialLink string, userID string)
 
 func (a shortLinkGenerator) sha256Of(input string) []byte {
 	algorithm := sha256.New()
-	algorithm.Write([]byte(input))
+	utils.LogErr(algorithm.Write([]byte(input)))
 	return algorithm.Sum(nil)
 }
 

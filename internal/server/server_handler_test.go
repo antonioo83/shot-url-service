@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -81,24 +80,24 @@ func TestGetRouters(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, tt.wantPost.httpStatus, resp.StatusCode)
 		assert.Equal(t, ts.URL+"/"+tt.code, resultParameter)
-		if err := resp.Body.Close(); err != nil {
-			log.Fatal(err)
+		if err := utils.ResourceClose(resp.Body); err != nil {
+			assert.NoError(t, err)
 		}
 
 		postRequest := getPostRequest(t, ts, "/", strings.NewReader(tt.originalURL))
 		resp, body := sendRequest(t, postRequest)
 		assert.Equal(t, tt.wantPost.httpStatus, resp.StatusCode)
 		assert.Equal(t, ts.URL+"/"+tt.code, body)
-		if err := resp.Body.Close(); err != nil {
-			log.Fatal(err)
+		if err := utils.ResourceClose(resp.Body); err != nil {
+			assert.NoError(t, err)
 		}
 
 		getGetRequest := getGetRequest(t, ts, "/"+tt.code, nil)
 		resp, body = sendRequest(t, getGetRequest)
 		assert.Equal(t, tt.wantGet.httpStatus, resp.StatusCode)
 		assert.Equal(t, tt.originalURL, body)
-		if err := resp.Body.Close(); err != nil {
-			log.Fatal(err)
+		if err := utils.ResourceClose(resp.Body); err != nil {
+			assert.NoError(t, err)
 		}
 	}
 }
