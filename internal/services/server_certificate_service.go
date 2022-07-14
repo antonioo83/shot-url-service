@@ -9,8 +9,10 @@ import (
 	"encoding/pem"
 	"fmt"
 	"github.com/antonioo83/shot-url-service/internal/services/interfaces"
+	"github.com/antonioo83/shot-url-service/internal/utils"
 	"math/big"
 	"net"
+	"os"
 	"time"
 )
 
@@ -24,8 +26,73 @@ func NewServerCertificate509Service(serialNumber int64, organization string, cou
 	return &serverCertificateService{serialNumber, organization, country}
 }
 
-//CreateTemplate create new template for a certificate.
-func (s serverCertificateService) CreateTemplate() *x509.Certificate {
+//SaveCertificateAndPrivateKeyToFiles save certificate and private key to the file.
+func (s serverCertificateService) SaveCertificateAndPrivateKeyToFiles(certFileName string, privateKeyFileName string) error {
+	certificatePEM, privateKeyPEM, err := s.generateCertificateAndPrivateKey()
+	if err != nil {
+		return fmt.Errorf("i can't open a file: %w", err)
+	}
+
+	err = s.saveToFile(certFileName, certificatePEM.Bytes())
+	if err != nil {
+		return fmt.Errorf("i can't open a file: %w", err)
+	}
+
+	err = s.saveToFile(privateKeyFileName, privateKeyPEM.Bytes())
+	if err != nil {
+		return fmt.Errorf("i can't open a file: %w", err)
+	}
+
+	return nil
+}
+
+// generateCertificateAndPrivateKey encode certificate to PEM format.
+func (s serverCertificateService) generateCertificateAndPrivateKey() (certificatePEM bytes.Buffer, privatePEM bytes.Buffer, error error) {
+	var certPEM bytes.Buffer
+	var privateKeyPEM bytes.Buffer
+
+	key, err := s.generateKey(4096)
+	if err != nil {
+		return certPEM, privateKeyPEM, fmt.Errorf("i can't generate a rsa key: %w", err)
+	}
+
+	privateKeyPEM, err = s.generatePrivateKey(key)
+	if err != nil {
+		return certPEM, privateKeyPEM, fmt.Errorf("i can't generate a private key: %w", err)
+	}
+
+	template := s.createTemplate()
+	certBytes, err := x509.CreateCertificate(rand.Reader, template, template, &key.PublicKey, key)
+	if err != nil {
+		return certPEM, privateKeyPEM, fmt.Errorf("i can't create a certificate: %w", err)
+	}
+
+	pem.Encode(&certPEM, &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: certBytes,
+	})
+
+	return certPEM, privateKeyPEM, nil
+}
+
+//saveToFile save array of byte to the file.
+func (s serverCertificateService) saveToFile(fileName string, data []byte) error {
+	file, err := os.OpenFile(fileName, os.O_RDONLY|os.O_CREATE, 0777)
+	if err != nil {
+		return fmt.Errorf("i can't open a file: %w", err)
+	}
+	defer utils.ResourceClose(file)
+
+	err = utils.LogErr(file.Write(data))
+	if err != nil {
+		return fmt.Errorf("i can't write to file: %w", err)
+	}
+
+	return nil
+}
+
+//createTemplate create new template for a certificate.
+func (s serverCertificateService) createTemplate() *x509.Certificate {
 	cert := &x509.Certificate{
 		// указываем уникальный номер сертификата
 		SerialNumber: big.NewInt(s.serialNumber),
@@ -50,8 +117,8 @@ func (s serverCertificateService) CreateTemplate() *x509.Certificate {
 	return cert
 }
 
-//GeneratePrivateKey generate new private key.
-func (s serverCertificateService) GeneratePrivateKey(privateKey *rsa.PrivateKey) (bytes.Buffer, error) {
+//generatePrivateKey generate new private key.
+func (s serverCertificateService) generatePrivateKey(privateKey *rsa.PrivateKey) (bytes.Buffer, error) {
 	var privateKeyPEM bytes.Buffer
 	err := pem.Encode(&privateKeyPEM, &pem.Block{
 		Type:  "RSA PRIVATE KEY",
@@ -64,29 +131,12 @@ func (s serverCertificateService) GeneratePrivateKey(privateKey *rsa.PrivateKey)
 	return privateKeyPEM, nil
 }
 
-// GenerateKey create new private RSA key.
-func (s serverCertificateService) GenerateKey(bits int) (*rsa.PrivateKey, error) {
+// generateKey create new private RSA key.
+func (s serverCertificateService) generateKey(bits int) (*rsa.PrivateKey, error) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, bits)
 	if err != nil {
 		return nil, fmt.Errorf("i can't generate private key: %w", err)
 	}
 
 	return privateKey, nil
-}
-
-// GenerateCertificate encode certificate to PEM format.
-func (s serverCertificateService) GenerateCertificate(cert *x509.Certificate, privateKey *rsa.PrivateKey) (bytes.Buffer, error) {
-	var certPEM bytes.Buffer
-	// создаём сертификат x.509
-	certBytes, err := x509.CreateCertificate(rand.Reader, cert, cert, &privateKey.PublicKey, privateKey)
-	if err != nil {
-		return certPEM, fmt.Errorf("i can't create a certificate: %w", err)
-	}
-
-	pem.Encode(&certPEM, &pem.Block{
-		Type:  "CERTIFICATE",
-		Bytes: certBytes,
-	})
-
-	return certPEM, nil
 }
