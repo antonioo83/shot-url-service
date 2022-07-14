@@ -1,0 +1,4 @@
+POST http://localhost:8080/
+Content-Type: text/plain; charset=utf-8
+
+https://stackoverflow.com/questions/15240884/how-can-i-handle-http-requests-of-different-methods-to-in-go_User3_16

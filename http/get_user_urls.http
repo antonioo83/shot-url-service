@@ -1,0 +1,2 @@
+GET http://localhost:8080/api/user/urls
+Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2NvZGUiOjF9.6dg8iJJI-CPFT6Bn4Dk3h0zITD4C7agRvUYJLszW5mI

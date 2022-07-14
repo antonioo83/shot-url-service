@@ -1,0 +1,5 @@
+DELETE http://localhost:8080/api/user/urls
+Content-Type: application/json
+Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2NvZGUiOjJ9.QpPAJ2Cp9sompfNhmrtqPBjwVbzMsdsqNVYHY6B9Gnc
+
+["WhGuTjTu","6UMC8GPk", "WhGuTjTu_1","6UMC8GPk_1", "WhGuTjTu_2","6UMC8GPk_2", "WhGuTjTu_3","6UMC8GPk_3"]
