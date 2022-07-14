@@ -80,7 +80,7 @@ func TestGetRouters(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, tt.wantPost.httpStatus, resp.StatusCode)
 		assert.Equal(t, ts.URL+"/"+tt.code, resultParameter)
-		if err := utils.ResourceClose(resp.Body); err != nil {
+		if err := resp.Body.Close(); err != nil {
 			assert.NoError(t, err)
 		}
 
@@ -88,7 +88,7 @@ func TestGetRouters(t *testing.T) {
 		resp, body := sendRequest(t, postRequest)
 		assert.Equal(t, tt.wantPost.httpStatus, resp.StatusCode)
 		assert.Equal(t, ts.URL+"/"+tt.code, body)
-		if err := utils.ResourceClose(resp.Body); err != nil {
+		if err := resp.Body.Close(); err != nil {
 			assert.NoError(t, err)
 		}
 
@@ -96,7 +96,7 @@ func TestGetRouters(t *testing.T) {
 		resp, body = sendRequest(t, getGetRequest)
 		assert.Equal(t, tt.wantGet.httpStatus, resp.StatusCode)
 		assert.Equal(t, tt.originalURL, body)
-		if err := utils.ResourceClose(resp.Body); err != nil {
+		if err := resp.Body.Close(); err != nil {
 			assert.NoError(t, err)
 		}
 	}
