@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/antonioo83/shot-url-service/config"
 	authInterfaces "github.com/antonioo83/shot-url-service/internal/handlers/auth/interfaces"
 	genInterfaces "github.com/antonioo83/shot-url-service/internal/handlers/generators/interfaces"
@@ -13,6 +14,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
+	"net"
 	"net/http"
 )
 
@@ -270,6 +272,71 @@ func GetUserURLsResponse(w http.ResponseWriter, r *http.Request, repository inte
 		http.Error(w, "httpStatus param is missed", http.StatusBadRequest)
 	}
 	utils.LogErr(w.Write(jsonResp))
+}
+
+type statResponse struct {
+	URLs  int `json:"urls"`
+	Users int `json:"users"`
+}
+
+// GetStatsResponse returns count of shot urls and count of users saved in the databases.
+func GetStatsResponse(w http.ResponseWriter, r *http.Request, config config.Config, repository interfaces.ShotURLRepository,
+	userRepository interfaces.UserRepository) {
+
+	ok, err := validateIP(r, config.TrustedSubnet)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if !ok {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	shortURLCount, err := repository.GetCount()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	userCount, err := userRepository.GetCount()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var statResponse statResponse
+	statResponse.URLs = shortURLCount
+	statResponse.Users = userCount
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	jsonResp, err := json.Marshal(statResponse)
+	if err != nil {
+		http.Error(w, "httpStatus param is missed", http.StatusBadRequest)
+	}
+	utils.LogErr(w.Write(jsonResp))
+}
+
+//validateIP checks IP address from the "X-Real-IP" header and CIDR is including this IP.
+func validateIP(r *http.Request, subnet string) (bool, error) {
+	ipStr := r.Header.Get("X-Real-IP")
+	if ipStr == "" {
+		return false, nil
+	}
+
+	userIP := net.ParseIP(ipStr)
+	if userIP == nil {
+		return false, nil
+	}
+
+	_, opNet, err := net.ParseCIDR(subnet)
+	if err != nil {
+		return false, fmt.Errorf("i can't parse CIDR: %w", err)
+	}
+
+	return opNet.Contains(userIP), nil
 }
 
 // GetDBStatusResponse returns database status.

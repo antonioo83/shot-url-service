@@ -13,4 +13,6 @@ type UserRepository interface {
 	IsInDatabase(code int) (bool, error)
 	//GetLastModel gets a last user from the storage.
 	GetLastModel() (*models.User, error)
+	//GetCount returns count of users in the storage.
+	GetCount() (int, error)
 }

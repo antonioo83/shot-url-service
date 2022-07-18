@@ -18,6 +18,20 @@ func NewShortURLRepository(context context.Context, pool *pgxpool.Pool) interfac
 	return &shortURLRepository{context, pool}
 }
 
+//GetCount gets count of short url in the storage.
+func (s shortURLRepository) GetCount() (int, error) {
+	var count int
+	row := s.connection.QueryRow(s.context, "SELECT COUNT(*) FROM short_url WHERE active=true")
+	err := row.Scan(&count)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return 0, nil
+	} else if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 //SaveURL saves an entity in the storage.
 func (s shortURLRepository) SaveURL(model models.ShortURL) error {
 	_, err := s.connection.Exec(

@@ -17,4 +17,6 @@ type ShotURLRepository interface {
 	IsInDatabase(code string) (bool, error)
 	//Delete deletes entities of a user from the storage by user code.
 	Delete(userCode int, codes []string) error
+	//GetCount returns count of entities in the storage.
+	GetCount() (int, error)
 }

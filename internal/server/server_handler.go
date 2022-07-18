@@ -42,6 +42,7 @@ func GetRouters(p RouteParameters) *chi.Mux {
 	r = GetDatabaseStatus(r, p.DatabaseRepository)
 	r = GetCreateShortURLBatchRoute(r, p.Config, p.ShotURLRepository, p.UserRepository, p.UserAuthHandler, p.Generator)
 	r = GetDeleteShortURLRoute(r, p.Config, p.ShotURLRepository, p.UserAuthHandler)
+	r = GetStatsRoute(r, p.Config, p.ShotURLRepository, p.UserRepository)
 	r.HandleFunc("/debug/pprof/", pprof.Index)
 	r.HandleFunc("/debug/pprof/allocs", pprof.Index)
 	r.HandleFunc("/debug/pprof/block", pprof.Index)
@@ -99,6 +100,17 @@ func GetUserUrlsRoute(r *chi.Mux, shotURLRepository interfaces.ShotURLRepository
 	userAuthHandler authInterfaces.UserAuthHandler) *chi.Mux {
 	r.Get("/api/user/urls", func(w http.ResponseWriter, r *http.Request) {
 		handlers.GetUserURLsResponse(w, r, shotURLRepository, userRepository, userAuthHandler)
+	})
+
+	return r
+}
+
+// GetStatsRoute returns a route to get count of shot urls and count of users saved in the databases.
+//
+// GET http://localhost:8080/api/internal/stats
+func GetStatsRoute(r *chi.Mux, config config.Config, shotURLRepository interfaces.ShotURLRepository, userRepository interfaces.UserRepository) *chi.Mux {
+	r.Get("/api/internal/stats", func(w http.ResponseWriter, r *http.Request) {
+		handlers.GetStatsResponse(w, r, config, shotURLRepository, userRepository)
 	})
 
 	return r

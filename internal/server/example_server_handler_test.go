@@ -4,6 +4,22 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+func ExampleGetStatsRoute() {
+	r := chi.NewRouter()
+	p := RouteParameters{}
+	r = GetStatsRoute(r, p.Config, p.ShotURLRepository, p.UserRepository)
+	// Output (parallel):
+	// # Request
+	// GET http://localhost:8080/api/internal/stats
+	// X-Real-IP: 127.0.0.1
+	//
+	// # Response
+	// HTTP/1.1 200 OK
+	// Content-Type: application/json
+	//
+	// {"urls": 15, "users":5}
+}
+
 func ExampleGetCreateShortURLRoute() {
 	r := chi.NewRouter()
 	p := RouteParameters{}

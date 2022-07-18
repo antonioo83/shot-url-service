@@ -16,6 +16,34 @@ func NewUserRepository(filename string) interfaces.UserRepository {
 	return &userRepository{filename}
 }
 
+//GetCount gets count of short url in the storage.
+func (r userRepository) GetCount() (int, error) {
+	var count int
+	model := models.User{}
+	consumer, err := GetConsumer(r.filename)
+	if err != nil {
+		return 0, err
+	}
+	defer utils.ResourceClose(consumer.file)
+
+	for consumer.scanner.Scan() {
+		jsonString := consumer.scanner.Text()
+		if jsonString != "" {
+			err := json.Unmarshal([]byte(jsonString), &model)
+			if err != nil {
+				return 0, fmt.Errorf("i can't decode json request: %s", err.Error())
+			}
+			count++
+		}
+	}
+
+	if err := consumer.scanner.Err(); err != nil {
+		return 0, fmt.Errorf("scanner of a consumer got the error: %w", err)
+	}
+
+	return count, nil
+}
+
 //Save saves a user in the storage.
 func (r userRepository) Save(model models.User) error {
 	producer, err := GetProducer(r.filename)

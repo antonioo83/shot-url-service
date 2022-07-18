@@ -14,6 +14,11 @@ func NewMemoryUserRepository(m map[int]models.User) interfaces.UserRepository {
 	return &memoryUserRepository{m}
 }
 
+//GetCount gets count of short url in the storage.
+func (m *memoryUserRepository) GetCount() (int, error) {
+	return len(m.buffer), nil
+}
+
 //Save saves a user in the storage.
 func (m *memoryUserRepository) Save(model models.User) error {
 	m.buffer[model.Code] = model

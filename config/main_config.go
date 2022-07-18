@@ -22,8 +22,9 @@ type Config struct {
 	DatabaseDsn         string         `env:"DATABASE_DSN" json:"database_dsn,omitempty"` // Database connection string.
 	IsUseDatabase       bool           // Is use database ?
 	FilepathToDBDump    string         // Filepath to the SQL dump for initialization database.
-	EnableHTTPS         bool           `env:"ENABLE_HTTPS" json:"enable_https,omitempty"` // Enable HTTPS connection.
-	ConfigFilePath      string         `env:"CONFIG" json:"config_file_path,omitempty"`   // Filename of the server configurations.
+	EnableHTTPS         bool           `env:"ENABLE_HTTPS" json:"enable_https,omitempty"`     // Enable HTTPS connection.
+	ConfigFilePath      string         `env:"CONFIG" json:"config_file_path,omitempty"`       // Filename of the server configurations.
+	TrustedSubnet       string         `env:"TRUSTED_SUBNET" json:"trusted_subnet,omitempty"` // Contains CIDR for validate access to statistic actions.
 	Auth                Auth           // User Authorization settings
 	DeleteShotURL       DeleteShortURL // Settings of deleting short url rows from database
 }
@@ -68,6 +69,7 @@ func GetConfigSettings(configFromFile *Config) Config {
 	flag.StringVar(&cfg.DatabaseDsn, "d", cfg.DatabaseDsn, "Database port")
 	flag.BoolVar(&cfg.EnableHTTPS, "s", cfg.EnableHTTPS, "Enable HTTPS connection")
 	flag.StringVar(&cfg.ConfigFilePath, "c", cfg.ConfigFilePath, "Filename of the server configurations")
+	flag.StringVar(&cfg.TrustedSubnet, "t", cfg.TrustedSubnet, "Contains CIDR for validate access to statistic actions")
 	flag.Parse()
 
 	if configFromFile != nil {
@@ -88,6 +90,9 @@ func GetConfigSettings(configFromFile *Config) Config {
 		}
 		if !cfg.EnableHTTPS {
 			cfg.EnableHTTPS = configFromFile.EnableHTTPS
+		}
+		if cfg.TrustedSubnet == "" {
+			cfg.TrustedSubnet = configFromFile.TrustedSubnet
 		}
 	}
 

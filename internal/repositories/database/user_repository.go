@@ -18,6 +18,20 @@ func NewUserRepository(context context.Context, pool *pgxpool.Pool) interfaces.U
 	return &userRepository{context, pool}
 }
 
+//GetCount gets count of short url in the storage.
+func (u userRepository) GetCount() (int, error) {
+	var count int
+	row := u.connection.QueryRow(u.context, "SELECT COUNT(*) FROM users")
+	err := row.Scan(&count)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return 0, nil
+	} else if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 //Save saves a user in the storage.
 func (u userRepository) Save(model models.User) error {
 	_, err := u.connection.Query(u.context, "INSERT INTO users(code, uid)VALUES ($1, $2)", &model.Code, &model.UID)

@@ -15,6 +15,11 @@ func NewMemoryRepository(m map[string]models.ShortURL) interfaces.ShotURLReposit
 	return &memoryRepository{m}
 }
 
+//GetCount gets count of short url in the storage.
+func (m *memoryRepository) GetCount() (int, error) {
+	return len(m.buffer), nil
+}
+
 //SaveURL saves an entity in the storage.
 func (m *memoryRepository) SaveURL(model models.ShortURL) error {
 	m.buffer[model.Code] = model
