@@ -9,10 +9,14 @@ import (
 	"github.com/antonioo83/shot-url-service/internal/repositories/factory"
 	"github.com/antonioo83/shot-url-service/internal/repositories/interfaces"
 	"github.com/antonioo83/shot-url-service/internal/server"
+	grpc2 "github.com/antonioo83/shot-url-service/internal/server/grpc"
+	pb "github.com/antonioo83/shot-url-service/internal/server/grpc/proto"
 	"github.com/antonioo83/shot-url-service/internal/services"
 	"github.com/go-chi/jwtauth"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"google.golang.org/grpc"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -35,33 +39,56 @@ func main() {
 	if err != nil {
 		fmt.Println("i can't load configuration file:" + err.Error())
 	}
-	config := config.GetConfigSettings(configFromFile)
+	cfg := config.GetConfigSettings(configFromFile)
 
 	var tokenAuth *jwtauth.JWTAuth
 	var pool *pgxpool.Pool
 	ctx := context.Background()
-	databaseRepository := factory.GetDatabaseRepository(config)
-	if config.IsUseDatabase {
-		pool, _ = pgxpool.Connect(ctx, config.DatabaseDsn)
+	databaseRepository := factory.GetDatabaseRepository(cfg)
+	if cfg.IsUseDatabase {
+		pool, _ = pgxpool.Connect(ctx, cfg.DatabaseDsn)
 		defer pool.Close()
-		err := databaseInit(databaseRepository, pool, config.FilepathToDBDump)
+		err := databaseInit(databaseRepository, pool, cfg.FilepathToDBDump)
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
-	userRepository := factory.GetUserRepository(ctx, pool, config)
+	userRepository := factory.GetUserRepository(ctx, pool, cfg)
 	routeParameters :=
 		server.RouteParameters{
-			Config:             config,
-			ShotURLRepository:  factory.GetRepository(ctx, pool, config),
+			Config:             cfg,
+			ShotURLRepository:  factory.GetRepository(ctx, pool, cfg),
 			UserRepository:     userRepository,
 			DatabaseRepository: databaseRepository,
-			UserAuthHandler:    authFactory.NewAuthHandler(tokenAuth, userRepository, config),
+			UserAuthHandler:    authFactory.NewAuthHandler(tokenAuth, userRepository, cfg),
 			Generator:          generators.NewShortLinkDefaultGenerator(),
 		}
 	handler := server.GetRouters(routeParameters)
 
-	var srv = http.Server{Addr: config.ServerAddress, Handler: handler}
+	if cfg.ServerType == config.HttpServer {
+		var srv = http.Server{Addr: cfg.ServerAddress, Handler: handler}
+		runHTTPServer(cfg, srv)
+	} else if cfg.ServerType == config.GrpcServer {
+		srv := grpc.NewServer()
+		runGRPCServer(cfg, srv, routeParameters)
+	} else {
+		log.Fatalf("Unknowned server type")
+	}
+
+	// через этот канал сообщим основному потоку, что соединения закрыты
+	//idleConnsClosed := make(chan struct{})
+	// канал для перенаправления прерываний
+	//sigint := make(chan os.Signal, 1)
+	//shutdownGracefully(ctx, &srv, idleConnsClosed, sigint)
+
+	// ждём завершения процедуры graceful shutdown.
+	//<-idleConnsClosed
+	// получили оповещение о завершении, освобождаем ресурсы перед выходом.
+	//fmt.Println("Server Shutdown gracefully")
+	//srv.Shutdown(ctx)
+}
+
+func runHTTPServer(config config.Config, srv http.Server) {
 	if config.EnableHTTPS {
 		c := services.NewServerCertificate509Service(1658, "Yandex.Praktikum", "RU")
 		if err := c.SaveCertificateAndPrivateKeyToFiles("cert.pem", "private.key"); err != nil {
@@ -75,18 +102,27 @@ func main() {
 			log.Fatalf("HTTP server ListenAndServe: %v", err)
 		}
 	}
+}
 
-	// через этот канал сообщим основному потоку, что соединения закрыты
-	idleConnsClosed := make(chan struct{})
-	// канал для перенаправления прерываний
-	sigint := make(chan os.Signal, 1)
-	shutdownGracefully(ctx, &srv, idleConnsClosed, sigint)
+func runGRPCServer(cfg config.Config, srv *grpc.Server, p server.RouteParameters) {
+	listen, err := net.Listen("tcp", ":3200")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// ждём завершения процедуры graceful shutdown.
-	<-idleConnsClosed
-	// получили оповещение о завершении, освобождаем ресурсы перед выходом.
-	fmt.Println("Server Shutdown gracefully")
-	srv.Shutdown(ctx)
+	var s grpc2.ShortURLServer
+	s.Config = p.Config
+	s.ShotURLRepository = p.ShotURLRepository
+	s.UserRepository = p.UserRepository
+	s.DatabaseRepository = p.DatabaseRepository
+	s.UserAuthHandler = p.UserAuthHandler
+	s.Generator = p.Generator
+	pb.RegisterShortURLServer(srv, &s)
+
+	fmt.Println("Сервер gRPC начал работу")
+	if err := srv.Serve(listen); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func shutdownGracefully(ctx context.Context, srv *http.Server, idleConnsClosed chan struct{}, sigint chan os.Signal) {

@@ -8,6 +8,7 @@ import (
 	authInterfaces "github.com/antonioo83/shot-url-service/internal/handlers/auth/interfaces"
 	genInterfaces "github.com/antonioo83/shot-url-service/internal/handlers/generators/interfaces"
 	"github.com/antonioo83/shot-url-service/internal/repositories/interfaces"
+	"github.com/antonioo83/shot-url-service/internal/services"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"net/http"
@@ -143,23 +144,12 @@ func GetCreateShortURLBatchRoute(r *chi.Mux, config config.Config, repository in
 //
 // DELETE http://localhost:8080/api/user/urls
 func GetDeleteShortURLRoute(r *chi.Mux, config config.Config, repository interfaces.ShotURLRepository, userAuthHandler authInterfaces.UserAuthHandler) *chi.Mux {
-	jobCh := make(chan handlers.ShotURLDelete)
-	RunDeleteShortURLWorker(jobCh, repository, config.DeleteShotURL.WorkersCount)
+	jobCh := make(chan services.ShotURLDelete)
+	services.RunDeleteShortURLWorker(jobCh, repository, config.DeleteShotURL.WorkersCount)
 
 	r.Delete("/api/user/urls", func(w http.ResponseWriter, r *http.Request) {
 		handlers.GetDeleteShortURLResponse(w, r, config, repository, userAuthHandler, jobCh)
 	})
 
 	return r
-}
-
-// RunDeleteShortURLWorker Run workers to delete shot URLs from database.
-func RunDeleteShortURLWorker(jobCh chan handlers.ShotURLDelete, repository interfaces.ShotURLRepository, workersCount int) {
-	for i := 0; i < workersCount; i++ {
-		go func() {
-			for shotURLDelete := range jobCh {
-				repository.Delete(shotURLDelete.UserCode, shotURLDelete.Codes)
-			}
-		}()
-	}
 }

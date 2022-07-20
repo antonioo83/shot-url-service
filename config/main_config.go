@@ -25,6 +25,7 @@ type Config struct {
 	EnableHTTPS         bool           `env:"ENABLE_HTTPS" json:"enable_https,omitempty"`     // Enable HTTPS connection.
 	ConfigFilePath      string         `env:"CONFIG" json:"config_file_path,omitempty"`       // Filename of the server configurations.
 	TrustedSubnet       string         `env:"TRUSTED_SUBNET" json:"trusted_subnet,omitempty"` // Contains CIDR for validate access to statistic actions.
+	ServerType          string         `env:"SERVER_TYPE" json:"server_type,omitempty"`
 	Auth                Auth           // User Authorization settings
 	DeleteShotURL       DeleteShortURL // Settings of deleting short url rows from database
 }
@@ -44,6 +45,11 @@ type DeleteShortURL struct {
 }
 
 var cfg Config
+
+const (
+	HttpServer = "http"
+	GrpcServer = "grpc"
+)
 
 // GetConfigSettings returns configuration settings.
 func GetConfigSettings(configFromFile *Config) Config {
@@ -94,6 +100,9 @@ func GetConfigSettings(configFromFile *Config) Config {
 		if cfg.TrustedSubnet == "" {
 			cfg.TrustedSubnet = configFromFile.TrustedSubnet
 		}
+		if cfg.ServerType == "" {
+			cfg.ServerType = configFromFile.ServerType
+		}
 	}
 
 	if cfg.ServerAddress == "" {
@@ -114,6 +123,10 @@ func GetConfigSettings(configFromFile *Config) Config {
 	cfg.IsUseDatabase = true
 	if cfg.DatabaseDsn == "" {
 		cfg.IsUseDatabase = false
+	}
+
+	if cfg.ServerType == "" {
+		cfg.ServerType = HttpServer
 	}
 
 	cfg.Auth.Alg = authEncodeAlgorithm

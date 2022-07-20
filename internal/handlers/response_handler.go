@@ -8,17 +8,15 @@ import (
 	"github.com/antonioo83/shot-url-service/config"
 	authInterfaces "github.com/antonioo83/shot-url-service/internal/handlers/auth/interfaces"
 	genInterfaces "github.com/antonioo83/shot-url-service/internal/handlers/generators/interfaces"
-	"github.com/antonioo83/shot-url-service/internal/models"
 	"github.com/antonioo83/shot-url-service/internal/repositories/interfaces"
+	"github.com/antonioo83/shot-url-service/internal/services"
 	"github.com/antonioo83/shot-url-service/internal/utils"
 	"github.com/go-chi/chi/v5"
-	"github.com/jackc/pgconn"
-	"github.com/jackc/pgerrcode"
 	"net"
 	"net/http"
 )
 
-type shortURLResponse struct {
+type ShortURLResponse struct {
 	CorrelationID string `json:"correlation_id"`
 	ShortURL      string `json:"short_url"`
 }
@@ -43,7 +41,7 @@ func GetCreateJSONShortURLResponse(w http.ResponseWriter, r *http.Request, confi
 		userAuth,
 		generator,
 		&createShortURLs,
-		func(w http.ResponseWriter, shotURLResponses []shortURLResponse, httpStatus int) {
+		func(w http.ResponseWriter, shotURLResponses []ShortURLResponse, httpStatus int) {
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(httpStatus)
 			jsonResponse, err := getJSONResponse("result", shotURLResponses[0].ShortURL)
@@ -87,7 +85,7 @@ func GetCreateShortURLResponse(w http.ResponseWriter, r *http.Request, config co
 		userAuth,
 		generator,
 		&createShortURLs,
-		func(w http.ResponseWriter, shotURLResponses []shortURLResponse, httpStatus int) {
+		func(w http.ResponseWriter, shotURLResponses []ShortURLResponse, httpStatus int) {
 			w.WriteHeader(httpStatus)
 			utils.LogErr(w.Write([]byte(shotURLResponses[0].ShortURL)))
 		},
@@ -112,7 +110,7 @@ func GetCreateShortURLBatchResponse(w http.ResponseWriter, r *http.Request, conf
 		userAuth,
 		generator,
 		createShortURLs,
-		func(w http.ResponseWriter, shotURLResponses []shortURLResponse, httpStatus int) {
+		func(w http.ResponseWriter, shotURLResponses []ShortURLResponse, httpStatus int) {
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(httpStatus)
 			jsonResponse, err := getJSONArrayResponse(shotURLResponses)
@@ -125,7 +123,7 @@ func GetCreateShortURLBatchResponse(w http.ResponseWriter, r *http.Request, conf
 	})
 }
 
-func getJSONArrayResponse(shotURLResponses []shortURLResponse) ([]byte, error) {
+func getJSONArrayResponse(shotURLResponses []ShortURLResponse) ([]byte, error) {
 	jsonResp, err := json.Marshal(shotURLResponses)
 	if err != nil {
 		return jsonResp, errors.New("error happened in JSON marshal")
@@ -143,71 +141,41 @@ type savedShortURLParameters struct {
 	userAuth        authInterfaces.UserAuthHandler
 	generator       genInterfaces.ShortLinkGenerator
 	createShortURLs *[]CreateShortURL
-	responseFunc    func(w http.ResponseWriter, shotURLResponses []shortURLResponse, httpStatus int)
+	responseFunc    func(w http.ResponseWriter, shotURLResponses []ShortURLResponse, httpStatus int)
 }
 
 func getSavedShortURLResponse(p savedShortURLParameters) {
-	var shortURLResponses []shortURLResponse
 	user, err := p.userAuth.GetAuthUser(p.request, p.rWriter)
 	if err != nil {
 		http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	var shortURLModels []models.ShortURL
-	for _, createShortURL := range *p.createShortURLs {
-		shotURL, code, err := p.generator.GetShortURL(createShortURL.OriginalURL, p.request.Host, p.config.BaseURL)
-		if err != nil {
-			http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		isInUser, err := p.userRepository.IsInDatabase(user.Code)
-		if err != nil {
-			http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		if !isInUser {
-			err = p.userRepository.Save(user)
-			if err != nil {
-				http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		}
-
-		isInDB, err := p.repository.IsInDatabase(code)
-		if err != nil {
-			http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		var shortURL models.ShortURL
-		shortURL.Code = code
-		shortURL.UserCode = user.Code
-		shortURL.CorrelationID = createShortURL.CorrelationID
-		shortURL.OriginalURL = createShortURL.OriginalURL
-		shortURL.ShortURL = shotURL
-		shortURL.Active = true
-		if p.config.IsUseDatabase || !isInDB {
-			shortURLModels = append(shortURLModels, shortURL)
-		}
-		shortURLResponses = append(shortURLResponses, shortURLResponse{shortURL.CorrelationID, shortURL.ShortURL})
+	var shotURLs []services.CreateShortURL
+	for _, item := range *p.createShortURLs {
+		shotURLs = append(shotURLs, services.CreateShortURL{OriginalURL: item.OriginalURL, CorrelationID: item.CorrelationID})
 	}
 
-	err = p.repository.SaveModels(shortURLModels)
+	var param services.ShortURLParameters
+	param.Config = p.config
+	param.Repository = p.repository
+	param.UserRepository = p.userRepository
+	param.Generator = p.generator
+	param.Host = p.request.Host
+	param.User = user
+	param.CreateShortURLs = &shotURLs
+	result, err := services.SaveShortURLs(param)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		errors.As(err, &pgErr)
-		if pgErr.Code == pgerrcode.UniqueViolation {
-			p.responseFunc(p.rWriter, shortURLResponses, http.StatusConflict)
-			return
-		} else {
-			http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		http.Error(p.rWriter, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	p.responseFunc(p.rWriter, shortURLResponses, http.StatusCreated)
+	var responses []ShortURLResponse
+	for _, item := range result.ShortURLResponses {
+		responses = append(responses, ShortURLResponse{CorrelationID: item.CorrelationID, ShortURL: item.ShortURL})
+	}
+
+	p.responseFunc(p.rWriter, responses, result.Status)
 }
 
 // GetOriginalURLResponse returns original URL by code.
@@ -217,22 +185,21 @@ func GetOriginalURLResponse(w http.ResponseWriter, r *http.Request, repository i
 		http.Error(w, "httpStatus param is missed", http.StatusBadRequest)
 		return
 	}
-	model, err := repository.FindByCode(code)
+
+	result, err := services.GetShortUrl(repository, code)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	}
-	if !model.Active {
-		w.WriteHeader(http.StatusGone)
+	} else if result.Status == http.StatusTemporaryRedirect {
+		w.Header().Set("Location", result.OriginalURL)
+		w.WriteHeader(result.Status)
+		utils.LogErr(w.Write([]byte(result.OriginalURL)))
+	} else if result.Status == http.StatusGone {
+		w.WriteHeader(result.Status)
 		return
-	}
-	// I can't remove else expression because it'll brake a wet test.
-	if model == nil {
-		http.Error(w, "can't find model for the code: %s"+code, http.StatusNoContent)
 	} else {
-		w.Header().Set("Location", model.OriginalURL)
-		w.WriteHeader(http.StatusTemporaryRedirect)
-		utils.LogErr(w.Write([]byte(model.OriginalURL)))
+		http.Error(w, err.Error(), result.Status)
+		return
 	}
 }
 
@@ -250,18 +217,18 @@ func GetUserURLsResponse(w http.ResponseWriter, r *http.Request, repository inte
 		return
 	}
 
-	models, err := repository.FindAllByUserCode(user.Code)
+	result, err := services.GetUserShortUrls(repository, user.Code)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if len(*models) == 0 {
+	if result.Status == http.StatusNoContent {
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
 	var parseData []userURLsResponse
-	for _, model := range *models {
+	for _, model := range *result.Models {
 		parseData = append(parseData, userURLsResponse{model.ShortURL, model.OriginalURL})
 	}
 
@@ -359,14 +326,9 @@ func GetDBStatusResponse(w http.ResponseWriter, databaseRepository interfaces.Da
 	w.WriteHeader(http.StatusOK)
 }
 
-type ShotURLDelete struct {
-	UserCode int
-	Codes    []string
-}
-
 // GetDeleteShortURLResponse deletes array of short URLs by array of codes.
 func GetDeleteShortURLResponse(w http.ResponseWriter, r *http.Request, config config.Config, repository interfaces.ShotURLRepository,
-	userAuth authInterfaces.UserAuthHandler, jobCh chan ShotURLDelete) {
+	userAuth authInterfaces.UserAuthHandler, jobCh chan services.ShotURLDelete) {
 	user, err := userAuth.GetAuthUser(r, w)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -379,26 +341,11 @@ func GetDeleteShortURLResponse(w http.ResponseWriter, r *http.Request, config co
 		return
 	}
 
-	sendCodesForDeleteToChanel(
+	services.SendCodesForDeleteToChanel(
 		jobCh,
-		ShotURLDelete{user.Code, *codes},
+		services.ShotURLDelete{UserCode: user.Code, Codes: *codes},
 		config.DeleteShotURL.ChunkLength,
 	)
 
 	w.WriteHeader(http.StatusAccepted)
-}
-
-// I am using the workerpool pattern because I don't see reasons in using the fanIn pattern.
-func sendCodesForDeleteToChanel(jobCh chan ShotURLDelete, shortURLDelete ShotURLDelete, chunkLength int) {
-	var chunkCodes []string
-	for _, code := range shortURLDelete.Codes {
-		chunkCodes = append(chunkCodes, code)
-		if len(chunkCodes) == chunkLength {
-			jobCh <- ShotURLDelete{shortURLDelete.UserCode, chunkCodes}
-			chunkCodes = []string{}
-		}
-	}
-	if len(chunkCodes) > 0 {
-		jobCh <- ShotURLDelete{shortURLDelete.UserCode, chunkCodes}
-	}
 }

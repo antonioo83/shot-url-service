@@ -14,6 +14,8 @@ require (
 	github.com/jackc/pgx/v4 v4.15.0
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/tools v0.1.11
+	google.golang.org/grpc v1.48.0
+	google.golang.org/protobuf v1.28.0
 	honnef.co/go/tools v0.0.1-2019.2.3
 )
 
@@ -28,6 +30,7 @@ require (
 	github.com/go-toolsmith/strparse v1.0.0 // indirect
 	github.com/go-toolsmith/typep v1.0.2 // indirect
 	github.com/goccy/go-json v0.3.5 // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gostaticanalysis/comment v1.4.1 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
@@ -51,7 +54,9 @@ require (
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20220613132600-b0d781184e0d // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
+	golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f // indirect
 	golang.org/x/sys v0.0.0-20220615213510-4f61da869c0c // indirect
 	golang.org/x/text v0.3.7 // indirect
+	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
