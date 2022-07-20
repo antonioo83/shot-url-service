@@ -65,10 +65,10 @@ func main() {
 		}
 	handler := server.GetRouters(routeParameters)
 
-	if cfg.ServerType == config.HttpServer {
+	if cfg.ServerType == config.HTTPServer {
 		var srv = http.Server{Addr: cfg.ServerAddress, Handler: handler}
-		runHTTPServer(cfg, srv)
-	} else if cfg.ServerType == config.GrpcServer {
+		runHTTPServer(cfg, &srv)
+	} else if cfg.ServerType == config.GRPCServer {
 		srv := grpc.NewServer()
 		runGRPCServer(cfg, srv, routeParameters)
 	} else {
@@ -88,7 +88,7 @@ func main() {
 	//srv.Shutdown(ctx)
 }
 
-func runHTTPServer(config config.Config, srv http.Server) {
+func runHTTPServer(config config.Config, srv *http.Server) {
 	if config.EnableHTTPS {
 		c := services.NewServerCertificate509Service(1658, "Yandex.Praktikum", "RU")
 		if err := c.SaveCertificateAndPrivateKeyToFiles("cert.pem", "private.key"); err != nil {

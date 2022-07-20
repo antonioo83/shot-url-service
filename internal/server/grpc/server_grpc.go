@@ -103,7 +103,7 @@ func (s *ShortURLServer) CreateBatchShortURL(ctx context.Context, in *pb.BatchSh
 
 func (s *ShortURLServer) GetShortURL(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, error) {
 	response := pb.GetResponse{}
-	result, err := services.GetShortUrl(s.ShotURLRepository, in.Code)
+	result, err := services.GetShortURL(s.ShotURLRepository, in.Code)
 	if err != nil {
 		return &response, fmt.Errorf("i can't get short url: %w", err)
 	}

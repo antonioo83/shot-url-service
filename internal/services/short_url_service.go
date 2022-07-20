@@ -93,7 +93,7 @@ type ShortURLGetResult struct {
 	OriginalURL string
 }
 
-func GetShortUrl(repository interfaces.ShotURLRepository, code string) (*ShortURLGetResult, error) {
+func GetShortURL(repository interfaces.ShotURLRepository, code string) (*ShortURLGetResult, error) {
 	model, err := repository.FindByCode(code)
 	if err != nil {
 		return nil, err

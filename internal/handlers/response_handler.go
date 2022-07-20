@@ -186,7 +186,7 @@ func GetOriginalURLResponse(w http.ResponseWriter, r *http.Request, repository i
 		return
 	}
 
-	result, err := services.GetShortUrl(repository, code)
+	result, err := services.GetShortURL(repository, code)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -197,10 +197,10 @@ func GetOriginalURLResponse(w http.ResponseWriter, r *http.Request, repository i
 	} else if result.Status == http.StatusGone {
 		w.WriteHeader(result.Status)
 		return
-	} else {
-		http.Error(w, err.Error(), result.Status)
-		return
 	}
+
+	http.Error(w, err.Error(), result.Status)
+	return
 }
 
 type userURLsResponse struct {

@@ -47,8 +47,8 @@ type DeleteShortURL struct {
 var cfg Config
 
 const (
-	HttpServer = "http"
-	GrpcServer = "grpc"
+	HTTPServer = "http"
+	GRPCServer = "grpc"
 )
 
 // GetConfigSettings returns configuration settings.
@@ -126,7 +126,7 @@ func GetConfigSettings(configFromFile *Config) Config {
 	}
 
 	if cfg.ServerType == "" {
-		cfg.ServerType = HttpServer
+		cfg.ServerType = HTTPServer
 	}
 
 	cfg.Auth.Alg = authEncodeAlgorithm
