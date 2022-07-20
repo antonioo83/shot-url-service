@@ -198,9 +198,6 @@ func GetOriginalURLResponse(w http.ResponseWriter, r *http.Request, repository i
 		w.WriteHeader(result.Status)
 		return
 	}
-
-	http.Error(w, err.Error(), result.Status)
-	return
 }
 
 type userURLsResponse struct {
