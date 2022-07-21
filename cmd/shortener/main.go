@@ -65,27 +65,25 @@ func main() {
 		}
 	handler := server.GetRouters(routeParameters)
 
+	idleConnsClosed := make(chan struct{})
+	sigint := make(chan os.Signal, 1)
 	if cfg.ServerType == config.HTTPServer {
 		var srv = http.Server{Addr: cfg.ServerAddress, Handler: handler}
 		runHTTPServer(cfg, srv)
+		shutdownGracefullyHTTPServer(ctx, &srv, idleConnsClosed, sigint)
+		<-idleConnsClosed
+		fmt.Println("Server HTTP Shutdown gracefully")
+		srv.Shutdown(ctx)
 	} else if cfg.ServerType == config.GRPCServer {
 		srv := grpc.NewServer()
 		runGRPCServer(cfg, srv, routeParameters)
+		shutdownGracefullyGRPCServer(srv, idleConnsClosed, sigint)
+		<-idleConnsClosed
+		fmt.Println("Server GRPC Shutdown gracefully")
+		srv.GracefulStop()
 	} else {
 		log.Fatalf("Unknowned server type")
 	}
-
-	// через этот канал сообщим основному потоку, что соединения закрыты
-	//idleConnsClosed := make(chan struct{})
-	// канал для перенаправления прерываний
-	//sigint := make(chan os.Signal, 1)
-	//shutdownGracefully(ctx, &srv, idleConnsClosed, sigint)
-
-	// ждём завершения процедуры graceful shutdown.
-	//<-idleConnsClosed
-	// получили оповещение о завершении, освобождаем ресурсы перед выходом.
-	//fmt.Println("Server Shutdown gracefully")
-	//srv.Shutdown(ctx)
 }
 
 func runHTTPServer(config config.Config, srv http.Server) {
@@ -125,7 +123,7 @@ func runGRPCServer(cfg config.Config, srv *grpc.Server, p server.RouteParameters
 	}
 }
 
-func shutdownGracefully(ctx context.Context, srv *http.Server, idleConnsClosed chan struct{}, sigint chan os.Signal) {
+func shutdownGracefullyHTTPServer(ctx context.Context, srv *http.Server, idleConnsClosed chan struct{}, sigint chan os.Signal) {
 	signal.Notify(sigint, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 	go func() {
 		<-sigint
@@ -137,7 +135,17 @@ func shutdownGracefully(ctx context.Context, srv *http.Server, idleConnsClosed c
 		// сообщаем основному потоку, что все сетевые соединения обработаны и закрыты
 		close(idleConnsClosed)
 	}()
+}
 
+func shutdownGracefullyGRPCServer(srv *grpc.Server, idleConnsClosed chan struct{}, sigint chan os.Signal) {
+	signal.Notify(sigint, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+	go func() {
+		<-sigint
+		// получили сигнал os.Interrupt, запускаем процедуру graceful shutdown
+		srv.GracefulStop()
+		// сообщаем основному потоку, что все сетевые соединения обработаны и закрыты
+		close(idleConnsClosed)
+	}()
 }
 
 func databaseInit(repository interfaces.DatabaseRepository, connect *pgxpool.Pool, filepathToDBDump string) error {
