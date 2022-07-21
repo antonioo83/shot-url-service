@@ -1,0 +1,4 @@
+POST http://localhost:8080/api/shorten
+Content-Type: application/json
+
+{"url": "https://stackoverflow.com/questions/15240884/how-can-i-handle-http-requests-of-different-methods-to-in-go11122334"}

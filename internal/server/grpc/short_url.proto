@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package grpc;
+
+option go_package = "server/grpc/proto";
+
+message ShortURLRequest {
+  int32 UserCode = 1;
+  string URL = 2;
+}
+
+message ShortURLResponse {
+  int32 Status = 1;
+  string CorrelationID = 2;
+  string ShortURL = 3;
+}
+
+message BatchShortURLRequest {
+  string CorrelationID = 1;
+  string OriginalURL = 2;
+}
+
+message BatchShortURLRequests {
+  int32 UserCode = 1;
+  repeated BatchShortURLRequest Items = 2;
+}
+
+message BatchShortURLResponse {
+  string CorrelationID = 1;
+  string ShortURL = 2;
+}
+
+message BatchShortURLResponses {
+  int32 Status = 1;
+  repeated BatchShortURLResponse items = 2;
+}
+
+message GetRequest {
+  string Code = 1;
+}
+
+message GetResponse {
+  int32 Status = 1;
+  string OriginalURL = 2;
+}
+
+message GetUserURLRequest {
+  int32 UserCode = 1;
+}
+
+message GetUserURLResponse {
+  string ShortURL = 1;
+  string OriginalURL = 2;
+}
+
+message GetUserURLResponses {
+  int32 Status = 1;
+  repeated GetUserURLResponse items = 2;
+}
+
+message DeleteUserURLRequest {
+  int32 UserCode = 1;
+  repeated string Codes = 2;
+}
+
+message DeleteUserURLResponse {
+  int32 Status = 1;
+}
+
+service ShortURL {
+  rpc CreateShortURL(ShortURLRequest) returns (ShortURLResponse);
+  rpc CreateBatchShortURL(BatchShortURLRequests) returns (BatchShortURLResponses);
+  rpc GetShortURL(GetRequest) returns (GetResponse);
+  rpc GetUserURLs(GetUserURLRequest) returns (GetUserURLResponses);
+  rpc DeleteUserURLs(DeleteUserURLRequest) returns (DeleteUserURLResponse);
+}
