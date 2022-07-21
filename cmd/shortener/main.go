@@ -69,7 +69,7 @@ func main() {
 	sigint := make(chan os.Signal, 1)
 	if cfg.ServerType == config.HTTPServer {
 		var srv = http.Server{Addr: cfg.ServerAddress, Handler: handler}
-		runHTTPServer(cfg, srv)
+		runHTTPServer(cfg, &srv)
 		shutdownGracefullyHTTPServer(ctx, &srv, idleConnsClosed, sigint)
 		<-idleConnsClosed
 		fmt.Println("Server HTTP Shutdown gracefully")
@@ -86,7 +86,7 @@ func main() {
 	}
 }
 
-func runHTTPServer(config config.Config, srv http.Server) {
+func runHTTPServer(config config.Config, srv *http.Server) {
 	if config.EnableHTTPS {
 		c := services.NewServerCertificate509Service(1658, "Yandex.Praktikum", "RU")
 		if err := c.SaveCertificateAndPrivateKeyToFiles("cert.pem", "private.key"); err != nil {
